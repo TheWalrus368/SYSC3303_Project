@@ -9,7 +9,7 @@ class IdleState implements DroneState {
     @Override
     public void handle(DroneStateMachine context) {
         DroneSubsystem drone = context.getDrone();
-        System.out.println("[DroneSubsystem] Idling...");
+        System.out.println("[DroneSubsystem][STATE:IDLE] Idling...");
 
         try {
             // If agent is empty, refill
@@ -18,7 +18,7 @@ class IdleState implements DroneState {
             } else {
                 // Fetch task from Scheduler
                 FireEvent task = drone.fetchTask();
-                System.out.println("[DroneSubsystem] Received task: " + task);
+                System.out.println("[DroneSubsystem][STATE:IDLE] Received task: " + task);
                 
                 // Simulate task processing
                 Thread.sleep(2000);
@@ -37,13 +37,13 @@ class EnRouteState implements DroneState {
             DroneSubsystem drone = context.getDrone();
             FireEvent task = drone.fetchTask(); // Fetch the current assigned task
             
-            System.out.println("[DroneSubsystem] En route to fire incident...");
+            System.out.println("[DroneSubsystem][STATE:EN_ROUTE] En route to fire incident...");
 
             Thread.sleep(2000); // Simulating travel time
 
             // Notify the scheduler that the drone has arrived
             if (task != null) {
-                drone.notifyArrival(task);
+                drone.notifyArrival(task, "EN_ROUTE");
             }
 
             // Transition to the next state
@@ -68,12 +68,12 @@ class DroppingAgentState implements DroneState {
             // Simulate dropping agent and depletion
             drone.completeTask(task);
 
-            if (drone.isAgentEmpty() && drone.getRemainingWaterNeeded() > 0) {
-                System.out.println("[DroneSubsystem] Not enough agent, refilling...");
+            if (drone.isAgentEmpty() && task.getRemainingWaterNeeded() > 0) {
+                System.out.println("[DroneSubsystem][STATE:DROPPING] Not enough agent, refilling...");
                 context.setState("REFILLING");
-            } else if (drone.getRemainingWaterNeeded() <= 0) {
-                System.out.println("[DroneSubsystem] Fire is out, returning to base.");
-                drone.notifyReturn(task);
+            } else if (task.getRemainingWaterNeeded() <= 0) {
+                System.out.println("[DroneSubsystem][STATE:DROPPING] Fire is out, returning to base.");
+                drone.notifyReturn(task, "DROPPING");
                 context.setState("IDLE");
             }
 
@@ -91,18 +91,18 @@ class RefillingState implements DroneState {
             FireEvent lastTask = drone.fetchTask();
 
             if (drone.isAgentEmpty()) {
-                drone.notifyReturn(lastTask);
-                System.out.println("[DroneSubsystem] Refilling agent...");
+                drone.notifyReturn(lastTask, "REFILLING");
+                System.out.println("[DroneSubsystem][STATE:REFILLING] Refilling agent...");
                 Thread.sleep(2000);
                 drone.refillAgent();
-                System.out.println("[DroneSubsystem] Agent refilled.");
+                System.out.println("[DroneSubsystem][STATE:REFILLING] Agent refilled.");
             } else {
-                System.out.println("[DroneSubsystem] Skipping refill, agent level: " + drone.getAgentLevel() + "L");
+                System.out.println("[DroneSubsystem][STATE:REFILLING] Skipping refill, agent level: " + drone.getAgentLevel() + "L");
             }
 
-            if (lastTask != null && drone.getRemainingWaterNeeded() > 0) {
-                drone.notifyArrival(lastTask);
-                System.out.println("[DroneSubsystem] Returned to handle fire...");
+            if (lastTask != null && lastTask.getRemainingWaterNeeded() > 0) {
+                drone.notifyArrival(lastTask, "REFILLING");
+                System.out.println("[DroneSubsystem][STATE:REFILLING] Returned to handle fire...");
                 context.setState("DROPPING_AGENT");
             } else {
                 context.setState("IDLE");
@@ -118,7 +118,7 @@ class FaultedState implements DroneState {
     @Override
     public void handle(DroneStateMachine context){
         try{
-            System.out.println("[DroneSubsystem] Drone is faulted. Attention required...");
+            System.out.println("[DroneSubsystem][STATE:FAULT] Drone is faulted. Attention required...");
             Thread.sleep(2000);
         
         } catch (InterruptedException e) {

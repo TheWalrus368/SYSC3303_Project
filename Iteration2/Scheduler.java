@@ -12,7 +12,7 @@ public class Scheduler implements Runnable {
     // Synchronized method for FireIncidentSubsystem to send events to the Drone Subsystem
     public synchronized void receiveFireEvent(FireEvent event) {
         taskQueue.add(event); // Add the event to the queue
-        System.out.println("[Scheduler] Received a new Fire Event. Event added to task queue: " + event);
+        System.out.println("[Scheduler][FIRE_ID: "+event.getFireID()+"] Received a new Fire Event. Event added to task queue: " + event);
 
         // Notify waiting threads that a new task is available
         notifyAll();
@@ -21,7 +21,7 @@ public class Scheduler implements Runnable {
     // Synchronized method for Drone Subsystem to send events to the FireIncidentSubsystem
     public synchronized void sendDroneAcknowledgement(FireEvent event) {
         acknowledgementQueue.add(event); // Add the response to the queue
-        System.out.println("[Scheduler] Received drone acknowledgement, Response" + " added to acknowledgement queue: " + event);
+        System.out.println("[Scheduler][FIRE_ID: "+event.getFireID()+"] Received drone acknowledgement, Response" + " added to acknowledgement queue: " + event);
 
         // Notify waiting threads that a response is available
         notifyAll();

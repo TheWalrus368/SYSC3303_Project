@@ -3,12 +3,18 @@ public class FireEvent {
     private final int zoneId;        // Fire zone ID
     private final String eventType;  // Type of event (FIRE_DETECTED or DRONE_REQUEST)
     private final String severity;   // Severity level (High, Moderate, Low)
+    private int remainingWaterNeeded; 
+    private int fireID;
+    private static int nextFireID = 1;
 
     public FireEvent(String time, int zoneId, String eventType, String severity) {
         this.time = time;
         this.zoneId = zoneId;
         this.eventType = eventType;
         this.severity = severity;
+        this.fireID = nextFireID;
+        nextFireID ++;
+        this.remainingWaterNeeded = getWaterRequired();
     }
 
     public String getTime() {
@@ -25,6 +31,18 @@ public class FireEvent {
 
     public String getSeverity() {
         return severity;
+    }
+
+    public int getFireID(){
+        return fireID;
+    }
+
+    public void extinguish(int agentAmount){
+        this.remainingWaterNeeded -= agentAmount;
+    }
+
+    public int getRemainingWaterNeeded(){
+        return remainingWaterNeeded;
     }
 
     public int getWaterRequired() {
