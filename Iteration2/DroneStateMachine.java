@@ -5,7 +5,7 @@ interface DroneState {
     void handle(DroneStateMachine context);
 }
 
-class IdleState implements DroneState {
+class Idle implements DroneState {
     @Override
     public void handle(DroneStateMachine context) {
         DroneSubsystem drone = context.getDrone();
@@ -26,11 +26,12 @@ class IdleState implements DroneState {
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
+            context.setState("FAULTED");
         }
     }
 }
 
-class EnRouteState implements DroneState {
+class EnRoute implements DroneState {
     @Override
     public void handle(DroneStateMachine context) {
         try {
@@ -50,12 +51,13 @@ class EnRouteState implements DroneState {
             context.setState("DROPPING_AGENT");
         } catch (InterruptedException e) {
             e.printStackTrace();
+            context.setState("FAULTED");
         }
     }
 }
 
 
-class DroppingAgentState implements DroneState {
+class DroppingAgent implements DroneState {
     @Override
     public void handle(DroneStateMachine context){
         try{
@@ -71,7 +73,7 @@ class DroppingAgentState implements DroneState {
             if (drone.isAgentEmpty() && task.getRemainingWaterNeeded() > 0) {
                 System.out.println("[DroneSubsystem][STATE:DROPPING] Not enough agent, refilling...");
                 context.setState("REFILLING");
-            } else if (task.getRemainingWaterNeeded() <= 0) {
+            } else{
                 System.out.println("[DroneSubsystem][STATE:DROPPING] Fire is out, returning to base.");
                 drone.notifyReturn(task, "DROPPING");
                 context.setState("IDLE");
@@ -79,11 +81,12 @@ class DroppingAgentState implements DroneState {
 
         } catch (InterruptedException e) {
             e.printStackTrace();
+            context.setState("FAULTED");
         }
     }
 }
 
-class RefillingState implements DroneState {
+class Refilling implements DroneState {
     @Override
     public void handle(DroneStateMachine context){
         try{
@@ -109,12 +112,13 @@ class RefillingState implements DroneState {
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
+            context.setState("FAULTED");
         }
     }
 }
 
 
-class FaultedState implements DroneState {
+class Faulted implements DroneState {
     @Override
     public void handle(DroneStateMachine context){
         try{
@@ -123,6 +127,7 @@ class FaultedState implements DroneState {
         
         } catch (InterruptedException e) {
             e.printStackTrace();
+            context.setState("FAULTED");
         }
     }
 }
@@ -136,11 +141,11 @@ public class DroneStateMachine {
     public DroneStateMachine(DroneSubsystem drone){
         this.drone = drone;
         states = new HashMap<>();
-        states.put("IDLE", new IdleState());
-        states.put("EN_ROUTE", new EnRouteState());
-        states.put("DROPPING_AGENT", new DroppingAgentState());
-        states.put("REFILLING", new RefillingState());
-        states.put("FAULTED", new FaultedState());
+        states.put("IDLE", new Idle());
+        states.put("EN_ROUTE", new EnRoute());
+        states.put("DROPPING_AGENT", new DroppingAgent());
+        states.put("REFILLING", new Refilling());
+        states.put("FAULTED", new Faulted());
 
         currentState = states.get("IDLE");
     }
