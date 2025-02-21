@@ -1,15 +1,28 @@
 import java.util.ArrayList;
 
+/**
+ * The Scheduler class acts as a mediator between the FireIncidentSubsystem and the DroneSubsystem.
+ * It manages task assignments and acknowledgments between these subsystems using synchronized methods.
+ */
 public class Scheduler implements Runnable {
     private final ArrayList<FireEvent> taskQueue; // Queue for tasks to be assigned to the DroneSubsystem
     private final ArrayList<FireEvent> acknowledgementQueue; // Queue for responses from the DroneSubsystem
 
+    /**
+     * Constructs a Scheduler instance.
+     * Initializes task and acknowledgment queues.
+     */
     public Scheduler() {
         this.taskQueue = new ArrayList<>();
         this.acknowledgementQueue = new ArrayList<>();
     }
 
-    // Synchronized method for FireIncidentSubsystem to send events to the Drone Subsystem
+    /**
+     * Receives a fire event from the FireIncidentSubsystem and adds it to the task queue.
+     * Notifies any waiting threads that a new task is available.
+     * 
+     * @param event The fire event to be added to the task queue.
+     */
     public synchronized void receiveFireEvent(FireEvent event) {
         taskQueue.add(event); // Add the event to the queue
         System.out.println("[Scheduler][FIRE_ID: "+event.getFireID()+"] Received a new Fire Event. Event added to task queue: " + event);
@@ -18,7 +31,12 @@ public class Scheduler implements Runnable {
         notifyAll();
     }
 
-    // Synchronized method for Drone Subsystem to send events to the FireIncidentSubsystem
+    /**
+     * Sends an acknowledgment from the DroneSubsystem to the FireIncidentSubsystem.
+     * Adds the response to the acknowledgment queue and notifies waiting threads.
+     * 
+     * @param event The fire event that has been processed by the drone.
+     */
     public synchronized void sendDroneAcknowledgement(FireEvent event) {
         acknowledgementQueue.add(event); // Add the response to the queue
         System.out.println("[Scheduler][FIRE_ID: "+event.getFireID()+"] Received drone acknowledgement, Response" + " added to acknowledgement queue: " + event);
@@ -27,7 +45,11 @@ public class Scheduler implements Runnable {
         notifyAll();
     }
 
-    // Synchronized method for DroneSubsystem to fetch tasks
+   /**
+     * Assigns a fire event task to the DroneSubsystem. If no task is available, it waits until one is received.
+     * 
+     * @return The fire event assigned to the drone.
+     */
     public synchronized FireEvent assignTaskToDrone() {
         while (taskQueue.isEmpty()) { // Wait until a task is available
             try {
@@ -43,7 +65,11 @@ public class Scheduler implements Runnable {
         return task;
     }
 
-    // Synchronized method for receiving response from DroneSubsystem
+    /**
+     * Receives acknowledgment from the DroneSubsystem. If no acknowledgment is available, it waits until one is received.
+     * 
+     * @return The acknowledgment fire event received from the drone.
+     */
     public synchronized FireEvent receiveDroneAcknowledgement() {
         while (acknowledgementQueue.isEmpty()) { // Wait until a response is available
             try {
@@ -58,6 +84,9 @@ public class Scheduler implements Runnable {
         return response;
     }
 
+    /**
+     * The main run method for the Scheduler thread. Prints a message indicating it is running.
+     */
     @Override
     public void run() {
         System.out.println("[Scheduler] Running... Ready to queue and process events.\n");
