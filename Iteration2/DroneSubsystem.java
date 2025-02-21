@@ -1,3 +1,8 @@
+/**
+ * The DroneSubsystem class represents a drone responsible for handling fire-fighting tasks.
+ * It interacts with the Scheduler to receive fire events, manage its agent level, and complete tasks.
+ * This class runs as a separate thread and transitions through states using the DroneStateMachine.
+ */
 public class DroneSubsystem implements Runnable {
     private final Scheduler scheduler;
     private final DroneStateMachine stateMachine;
@@ -7,6 +12,12 @@ public class DroneSubsystem implements Runnable {
 
     private static final int MAX_AGENT_CAP = 15; // Max payload is 15kg
 
+    /**
+     * Constructs a DroneSubsystem with a reference to the Scheduler.
+     * Initializes the drone state machine and sets the agent level to full capacity.
+     * 
+     * @param scheduler The Scheduler instance managing fire events.
+     */
     public DroneSubsystem(Scheduler scheduler) {
         this.scheduler = scheduler;
         this.stateMachine = new DroneStateMachine(this);
@@ -14,6 +25,10 @@ public class DroneSubsystem implements Runnable {
         this.fireEventComplete = false;
     }
 
+    /**
+     * The main execution loop for the drone.
+     * It continuously processes state transitions using the state machine.
+     */
     @Override
     public void run() {
         try {
@@ -26,18 +41,38 @@ public class DroneSubsystem implements Runnable {
         }
     }
 
+    
+    /**
+     * Checks if the agent tank is empty.
+     * 
+     * @return true if the agent tank is empty, false otherwise.
+     */
     public boolean isAgentEmpty() {
         return agentLevel == 0;
     }
 
+    /**
+     * Refills the agent tank to its maximum capacity.
+     */
     public void refillAgent() {
         agentLevel = MAX_AGENT_CAP;
     }
 
+    /**
+     * Gets the current agent level.
+     * 
+     * @return The current agent level in kg.
+     */
     public int getAgentLevel() {
         return agentLevel;
     }
 
+    /**
+     * Notifies the scheduler when the drone arrives at a fire location.
+     * 
+     * @param event The fire event the drone is responding to.
+     * @param state The current state of the drone.
+     */
     public void notifyArrival(FireEvent event, String state) {
         if (event != null) {
             System.out.println("[DroneSubsystem][STATE:"+state+"] Drone has arrived at fire location: " + event);
@@ -45,14 +80,25 @@ public class DroneSubsystem implements Runnable {
         }
     }
 
+    /**
+     * Notifies the scheduler when the drone returns to base.
+     * 
+     * @param event The fire event the drone was responding to.
+     * @param state The current state of the drone.
+     */
     public void notifyReturn(FireEvent event, String state) {
         if (event != null) {
             System.out.println("[DroneSubsystem][STATE:"+state+"] Drone has returned to the base from: " + event);
             scheduler.sendDroneAcknowledgement(event); // Notify the scheduler
         }
     }
-    
 
+     /**
+     * Fetches a fire event task from the scheduler.
+     * If the last fire event is not yet fully extinguished, the drone will continue with it.
+     * 
+     * @return The fire event task assigned to the drone.
+     */
     public FireEvent fetchTask() {
         // If there was a previous fire event that has not been fully put out,
         // return this event so that the drone returns to it
@@ -67,6 +113,12 @@ public class DroneSubsystem implements Runnable {
         }
     }
 
+     /**
+     * Completes a fire event task by dropping the extinguishing agent.
+     * If the fire is not fully extinguished, the drone may need to refill and return.
+     * 
+     * @param task The fire event task being handled.
+     */
     public void completeTask(FireEvent task) {
         System.out.println("[DroneSubsystem][STATE:DROPPING] Task started with " + task.getRemainingWaterNeeded() + "L remaining to extinguish.");
     
