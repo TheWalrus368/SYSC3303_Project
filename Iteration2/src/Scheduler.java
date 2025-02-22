@@ -54,8 +54,7 @@ public class Scheduler implements Runnable {
         while (taskQueue.isEmpty()) { // Wait until a task is available
             try {
                 wait();
-            } catch (InterruptedException e) {
-            }
+            } catch (InterruptedException ignored) { }
         }
 
         // Fetch and remove the first task from the queue
@@ -74,8 +73,7 @@ public class Scheduler implements Runnable {
         while (acknowledgementQueue.isEmpty()) { // Wait until a response is available
             try {
                 wait();
-            } catch (InterruptedException e) {
-            }
+            } catch (InterruptedException ignored) { }
         }
 
         // Fetch and remove the first response from the queue

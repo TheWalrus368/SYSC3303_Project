@@ -9,7 +9,7 @@ public class FireEvent {
     private final String eventType;  // Type of event (FIRE_DETECTED or DRONE_REQUEST)
     private final String severity;   // Severity level (High, Moderate, Low)
     private int remainingWaterNeeded; 
-    private int fireID;
+    private final int fireID;
     private static int nextFireID = 1;
 
     /**
@@ -99,19 +99,15 @@ public class FireEvent {
      * @return The amount of water required to extinguish the fire.
      */
     public int getWaterRequired() {
-        switch (severity.toUpperCase()){
-            case "HIGH":
-            return 30; // High severity needs 30L
+        return switch (severity.toUpperCase()) {
+            case "HIGH" -> 30; // High severity needs 30L
 
-            case "MODERATE":
-            return 20; // Moderate severity needs 20L
+            case "MODERATE" -> 20; // Moderate severity needs 20L
 
-            case "LOW":
-            return 10; // Low severity needs 10L
+            case "LOW" -> 10; // Low severity needs 10L
 
-            default:
-            return 0;
-        }
+            default -> 0;
+        };
     }
 
     /**

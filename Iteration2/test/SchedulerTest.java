@@ -23,10 +23,9 @@ public class SchedulerTest {
      * Tests the {@code receiveFireEvent} method to ensure that a fire event is correctly
      * received and stored in the scheduler for processing by the drone subsystem.
      *
-     * @throws InterruptedException If the thread execution is interrupted.
      */
     @Test
-    public void testReceiveFireEvent() throws InterruptedException {
+    public void testReceiveFireEvent() {
         FireEvent event = new FireEvent("10:00", 1, "FIRE_DETECTED", "High");
 
         // Mocking behavior is not necessary here since we're testing direct method calls
@@ -42,10 +41,9 @@ public class SchedulerTest {
      * Tests the {@code returnFireEvent} method to ensure that a fire event response
      * is correctly received from the drone subsystem and stored in the scheduler.
      *
-     * @throws InterruptedException If the thread execution is interrupted.
      */
     @Test
-    public void testReturnFireEvent() throws InterruptedException {
+    public void testReturnFireEvent() {
         FireEvent event = new FireEvent("10:00", 1, "FIRE_DETECTED", "High");
 
         // Set up initial state
@@ -63,10 +61,9 @@ public class SchedulerTest {
      * Tests the {@code assignTaskToDrone} method to ensure that a fire event
      * is correctly assigned to the drone subsystem and marked as processed.
      *
-     * @throws InterruptedException If the thread execution is interrupted.
      */
     @Test
-    public void testAssignTaskToDrone() throws InterruptedException {
+    public void testAssignTaskToDrone() {
         FireEvent event = new FireEvent("10:00", 1, "FIRE_DETECTED", "High");
         scheduler.taskForDrone = event;
         scheduler.taskReady = true;
@@ -83,10 +80,9 @@ public class SchedulerTest {
      * Tests the {@code returnResponseToFire} method to ensure that a fire event response
      * is correctly returned to the fire incident subsystem and marked as processed.
      *
-     * @throws InterruptedException If the thread execution is interrupted.
      */
     @Test
-    public void testReturnResponseToFire() throws InterruptedException {
+    public void testReturnResponseToFire() {
         FireEvent event = new FireEvent("10:00", 1, "FIRE_DETECTED", "High");
         scheduler.receivedTaskDrone = event;
         scheduler.taskResponseReceived = true;

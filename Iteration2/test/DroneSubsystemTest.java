@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * @author Tony Situ
  * @version 30/01/2025
- *
  * The {@code DroneSubsystemTest} class contains unit tests for the {@code DroneSubsystem}.
  * It verifies the correct execution of the drone's behavior when processing fire events.
  */

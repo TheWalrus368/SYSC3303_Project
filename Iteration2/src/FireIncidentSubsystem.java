@@ -46,12 +46,8 @@ public class FireIncidentSubsystem implements Runnable {
                 FireEvent receivedEvent = scheduler.receiveDroneAcknowledgement(); // Wait to receive a response
                 System.out.println("[FireIncidentSubsystem] Received response from Scheduler " + receivedEvent);
 
-                Thread.sleep(1000); // Simulate delay between events
                 System.out.print("\n");
             }
-        } catch (IOException | InterruptedException e) {
-            System.out.println(e);
-        }
+        } catch (IOException ignored) { }
     }
-
 }

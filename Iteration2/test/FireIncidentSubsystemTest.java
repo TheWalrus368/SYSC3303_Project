@@ -52,7 +52,7 @@ public class FireIncidentSubsystemTest {
     public void tearDown() {
         // Delete the temporary file after each test
         if (tempFile != null && tempFile.exists()) {
-            tempFile.delete();
+            boolean ignored = tempFile.delete();
         }
     }
 

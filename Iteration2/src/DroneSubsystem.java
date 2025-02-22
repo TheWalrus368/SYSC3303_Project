@@ -36,9 +36,7 @@ public class DroneSubsystem implements Runnable {
                 // Handle state from DroneStateMachine
                 stateMachine.handleState();
             }
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        } catch (InterruptedException ignored) { }
     }
 
     

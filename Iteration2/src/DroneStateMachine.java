@@ -35,8 +35,7 @@ class Idle implements DroneState {
                 Thread.sleep(2000);
                 context.setState("EN_ROUTE");
             }
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        } catch (InterruptedException ignored) {
             context.setState("FAULTED");
         }
     }
@@ -62,8 +61,7 @@ class EnRoute implements DroneState {
 
             // Transition to the next state
             context.setState("DROPPING_AGENT");
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        } catch (InterruptedException ignored) {
             context.setState("FAULTED");
         }
     }
@@ -94,8 +92,7 @@ class DroppingAgent implements DroneState {
                 context.setState("IDLE");
             }
 
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        } catch (InterruptedException ignored) {
             context.setState("FAULTED");
         }
     }
@@ -128,8 +125,7 @@ class Refilling implements DroneState {
             } else {
                 context.setState("IDLE");
             }
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        } catch (InterruptedException ignored) {
             context.setState("FAULTED");
         }
     }
@@ -145,8 +141,7 @@ class Faulted implements DroneState {
             System.out.println("[DroneSubsystem][STATE:FAULT] Drone is faulted. Attention required...");
             Thread.sleep(2000);
         
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        } catch (InterruptedException ignored) {
             context.setState("FAULTED");
         }
     }
@@ -158,7 +153,7 @@ class Faulted implements DroneState {
 public class DroneStateMachine {
     private final Map<String, DroneState> states;
     private DroneState currentState;
-    private DroneSubsystem drone;
+    private final DroneSubsystem drone;
 
     /**
      * Initializes the DroneStateMachine with predefined states.
