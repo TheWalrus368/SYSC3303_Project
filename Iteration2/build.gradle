@@ -1,0 +1,36 @@
+plugins {
+    id 'java'
+}
+
+group 'your.project' // Replace with your project's group ID
+version '1.0-SNAPSHOT' // Replace with your project's version
+
+repositories {
+    mavenCentral() // Use Maven Central for dependencies
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs = ['src'] // Main Java source files are in the 'src' directory
+        }
+        resources {
+            srcDirs = ['src/resources'] // Resource files are in 'src/resources'
+        }
+    }
+    test {
+        java {
+            srcDirs = ['test'] // Test Java source files are in the 'test' directory
+        }
+    }
+}
+
+dependencies {
+    // JUnit 5 for testing
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.2'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.2'
+}
+
+test {
+    useJUnitPlatform() // Use JUnit 5 for tests
+}
