@@ -15,7 +15,7 @@ public class BoundedBuffer
 
     // buffer capacity
     public static final int SIZE = 100;
-    private String[] buffer = new String[SIZE];
+    private Object[] buffer = new Object[SIZE];
     private int inIndex = 0, outIndex = 0, count = 0;
 
     // If true, there is room for at least one object in the buffer.
@@ -24,7 +24,7 @@ public class BoundedBuffer
     // If true, there is at least one object stored in the buffer.
     private boolean readable = false;
 
-    public synchronized void addLast(String item)
+    public synchronized void addLast(Object item)
     {
         while (!writeable) {
             try {
@@ -45,9 +45,9 @@ public class BoundedBuffer
         notifyAll();
     }
 
-    public synchronized String removeFirst()
+    public synchronized Object removeFirst()
     {
-        String item;
+        Object item;
 
         while (!readable) {
             try {

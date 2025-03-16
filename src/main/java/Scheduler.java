@@ -15,6 +15,7 @@ class Scheduler implements Runnable{
     private LinkedList<EventStatus> drones = new LinkedList<>();  // Changed to LinkedList
 
     private DatagramPacket tempDatagramPacket;
+    private BoundedBuffer waitingDrones;
 
     /**
      * Creates a new host by:
@@ -30,6 +31,8 @@ class Scheduler implements Runnable{
             fireToDroneBuffer       = new BoundedBuffer(); // Holds all unprocessed fire reports
             droneToFireBuffer       = new BoundedBuffer(); // Holds all responses from drones
             loadZonesFromCSV(zoneCSV);
+
+            waitingDrones = new BoundedBuffer();
 
         } catch (SocketException e) {
             e.printStackTrace();
@@ -52,14 +55,14 @@ class Scheduler implements Runnable{
 
                 // Step 2: Parse what they want
                 String requestData            = new String(requestPacket.getData(), 0, requestPacket.getLength());
-                EventStatus eventStatus = addNewDrone(requestData);
+                EventStatus eventStatus = handleEvent(requestData);
 
                 System.out.println("[STATE: " + eventStatus.getState() + "]");
                 switch(eventStatus.getState()) {
                     case "READY":
                         // Step 3 (READY): Check for any unassigned fires. If there is a fire reply with fire
                         if (fireToDroneBuffer.getCount() != 0 ) {
-                            String fireRequest = fireToDroneBuffer.removeFirst();
+                            String fireRequest = fireToDroneBuffer.removeFirst().toString();
                             byte[] fireRequestBuffer = fireRequest.getBytes();
                             DatagramPacket droneAcknowledgementPacket = new DatagramPacket(fireRequestBuffer,
                                     fireRequestBuffer.length,
@@ -71,6 +74,7 @@ class Scheduler implements Runnable{
                         }else{
                             System.out.println("No Fires Available");
                             tempDatagramPacket = new DatagramPacket(requestPacket.getData(), requestPacket.getLength(), requestPacket.getAddress(), RECEIVE_PORT);
+                            waitingDrones.addLast(tempDatagramPacket);
                         }
                         // Step 4 (READY): Otherwise ignore the drone, make it wait
                         break;
@@ -113,7 +117,7 @@ class Scheduler implements Runnable{
                         sendSocket.send(acknowledgementPacket);
 
                         if (!drones.isEmpty()) {
-                            sendSocket.send(tempDatagramPacket);
+                            sendSocket.send((DatagramPacket) waitingDrones.removeFirst());
                         }
                         break;
 
@@ -121,7 +125,7 @@ class Scheduler implements Runnable{
                         // FireEvent waiting for confirmation fire is out.
                         System.out.println("[Scheduler <- FireIncidentSubsystem] " + requestData);
                         if (!drones.isEmpty()) {
-                            sendSocket.send(tempDatagramPacket);
+                            sendSocket.send((DatagramPacket) waitingDrones.removeFirst());
                         }
                         break;
                 }
@@ -132,7 +136,7 @@ class Scheduler implements Runnable{
     }
 
 
-    public EventStatus addNewDrone(String data) {
+    public EventStatus handleEvent(String data) {
         //System.out.println("\n" + "data: " + data + "\n");
         String pattern = "\\[DRONE: (\\d+)\\]\\[PORT: (\\d+)\\]\\[STATE: ([^\\]]+)\\]";
         Pattern regex = Pattern.compile(pattern);
@@ -150,7 +154,7 @@ class Scheduler implements Runnable{
                     return existingDrone; // Drone already exists
                 }
             }
-            drones.add(newDrone); // Using LinkedList's add method
+            drones.add(newDrone);
             return newDrone;
         } else {
             if (data.contains("NEW FIRE")){

@@ -20,10 +20,12 @@ public class Simulation {
         Thread fireIncidentThread = new Thread(fireIncidentSubsystem);
         Thread schedulerThread = new Thread(scheduler);
         Thread droneThread = new Thread(droneSubsystem);
+        Thread droneThread2 = new Thread(droneSubsystem2);
 
         // Begin execution of subsystems
         fireIncidentThread.start();
         schedulerThread.start();
         droneThread.start();
+        droneThread2.start();
     }
 }
