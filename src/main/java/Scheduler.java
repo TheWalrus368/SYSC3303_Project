@@ -6,12 +6,17 @@ import java.net.SocketException;
 import java.util.*;
 import java.util.regex.*;
 
+/**
+ * The Scheduler class manages communication between the DroneSubsystem and the FireIncidentSubsystem.
+ * The Scheduler assigns fire events to drones and handles incoming fire events. It uses UDP sockets to handle
+ * communication
+ */
 class Scheduler implements Runnable{
     private static final Map<Integer, Zone> zoneMap = new HashMap<>();
     private static final int RECEIVE_PORT = 7000;
     private DatagramSocket receiveSocket, sendSocket;
     private BoundedBuffer fireToDroneBuffer, droneToFireBuffer;
-    private LinkedList<DroneStatus> drones = new LinkedList<>();  // Changed to LinkedList
+    private final LinkedList<DroneStatus> drones = new LinkedList<>();  // Changed to LinkedList
     private Thread receiveThread;
 
     /**
@@ -58,6 +63,12 @@ class Scheduler implements Runnable{
         }
     }
 
+    /**
+     * Handles incoming UDP packets and processes them based on the command type.
+     * This method is responsible for managing communication between the Scheduler,
+     * drones, and the fire incident subsystem.
+     * @param requestPacket The incoming DatagramPacket containing the request data
+     */
     private void RCP_Receive(DatagramPacket requestPacket){
         try{
             int port;
@@ -161,9 +172,16 @@ class Scheduler implements Runnable{
         }
     }
 
+/**
+ * Parses the incoming data to determine the type of event and its associated details.
+ * This method identifies the event type
+ * and returns an EventStatus object containing the command and relevant data.
+ *
+ * @param data The incoming data string to be parsed.
+ * @return EventStatus An object representing the event type and associated details.
+ */
     public EventStatus handleEvent(String data) {
-        //System.out.println("\n" + "data: " + data + "\n");
-        String pattern = "\\[DRONE: (\\d+)\\]\\[PORT: (\\d+)\\]\\[STATE: ([^\\]]+)\\]";
+        String pattern = "\\[DRONE: (\\d+)]\\[PORT: (\\d+)]\\[STATE: ([^]]+)]";
         Pattern regex = Pattern.compile(pattern);
         Matcher matcher = regex.matcher(data);
 
@@ -201,6 +219,11 @@ class Scheduler implements Runnable{
         }
     }
 
+    /**
+     * Returns the port of the drone
+     * @param droneID The drone's id
+     * @return The port of the drone with the same DroneID
+     */
     public int getDronePort(int droneID){
         for (DroneStatus drone: drones){
             if (drone.getDroneID() == droneID){
@@ -210,6 +233,9 @@ class Scheduler implements Runnable{
         return -1;
     }
 
+    /**
+     * @return The available drone from the list of drones and changes its state to "USED"
+     */
     public synchronized DroneStatus getAvailableDrone(){
         for (DroneStatus drone: drones){
             if (drone.getState().equals("READY")){
@@ -220,6 +246,11 @@ class Scheduler implements Runnable{
         return null;
     }
 
+    /**
+     * Changes the drone state to the next when ready
+     * @param droneID The drone's id of the drone that needs to have its state updated
+     * @param newState The new state that the drone needs to update to
+     */
     public synchronized void updateDroneState(int droneID, String newState) {
         for (DroneStatus drone: drones){
             if (drone.getDroneID() == droneID){
@@ -228,6 +259,13 @@ class Scheduler implements Runnable{
         }
     }
 
+    /**
+     * Loads zone data from a CSV file and populates the zoneMap with Zone objects.
+     * The method parses the file, extracts zone coordinates, and creates Zone objects
+     * which are then stored in the zoneMap for later retrieval.
+     *
+     * @param filePath The path to the CSV file containing zone data.
+     */
     public void loadZonesFromCSV(String filePath) {
         try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
             String line;
@@ -251,6 +289,10 @@ class Scheduler implements Runnable{
         }
     }
 
+    /**
+     * @param zoneId The ID of the zone to retrieve.
+     * @return Zone The Zone object corresponding to the given ID, or null if the zone ID is not found.
+     */
     public static Zone getZone(int zoneId) {
         return zoneMap.get(zoneId);
     }

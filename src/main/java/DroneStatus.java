@@ -1,6 +1,10 @@
+/**
+ * Responsible for managing the drone states from the scheduler depending
+ * on the event state.
+ */
 class DroneStatus {
-    private int droneId;
-    private int port;
+    private final int droneId;
+    private final int port;
     private String state;
     private FireEvent currentFire;
     private boolean fireComplete;
@@ -14,13 +18,42 @@ class DroneStatus {
         this.fireComplete = false;
     }
 
+    /**
+     * @return the drone's id
+     */
     public int getDroneID() { return droneId; }
+
+    /**
+     * @return the drone's port
+     */
     public int getPort() { return port; }
+
+    /**
+     * @return the drone's state
+     */
     public String getState() { return state; }
+
+    /**
+     * @return the current fire event
+     */
     public FireEvent getCurrentFire() { return currentFire; }
 
+    /**
+     * Sets the current state of the drone.
+     *
+     * @param state the drone's current state
+     */
     public void setState(String state) { this.state = state; }
+
+    /**
+     * Set's the current fire vent of the drone
+     *
+     * @param currentFire the fire event assigned to the drone
+     */
     public void setCurrentFire(FireEvent currentFire) { this.currentFire = currentFire; }
 
+    /**
+     * @return true if the fire is complete, and false otherwise
+     */
     public boolean isFireComplete(){return this.fireComplete;}
 }

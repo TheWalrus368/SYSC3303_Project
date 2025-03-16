@@ -2,6 +2,10 @@ import java.io.IOException;
 import java.net.*;
 import java.util.regex.*;
 
+/**
+ * The subsystem for a single drone, that sends requests from the scheduler for fire incidents
+ * and performs various tasks in accordance to its state.
+ */
 public class DroneSubsystem implements Runnable {
     private int droneID;
     //private final DroneStateMachine stateMachine;
@@ -40,8 +44,7 @@ public class DroneSubsystem implements Runnable {
             sendSocket      = new DatagramSocket();
             receiveSocket   = new DatagramSocket(DRONE_PORT);
 
-        } catch (SocketException se) {
-            se.printStackTrace();
+        } catch (SocketException ignored) {
             System.exit(1);
         }
     }
@@ -71,6 +74,13 @@ public class DroneSubsystem implements Runnable {
         }
     }
 
+    /**
+     * Sends a request to the scheduler to be assigned a fire incident and receives it.
+     *
+     * @param requestPacket the packet that is sent to the scheduler to request for a fire event
+     * @param receivePacket the packet that is received from the scheduler
+     * @return the received packet from the scheduler after the request
+     */
     public synchronized DatagramPacket rpc_send(DatagramPacket requestPacket, DatagramPacket receivePacket){
        try{
            // STEP 1: Send a request to scheduler for any new fires / register to drone to the schedulers knowledge
@@ -123,6 +133,11 @@ public class DroneSubsystem implements Runnable {
         return parseDataToFireEvent(data);
     }
 
+    /**
+     * Parses the fire event from a string and extracts the information to create a fire event.
+     * @param data The fire event data from the packet as a string
+     * @return the fire event that was created from the extracted data
+     */
     public FireEvent parseDataToFireEvent(String data) {
         // Updated regex pattern to correctly extract values
         String pattern = "NEW FIRE: FireEvent\\{'ID=(\\d+)', time='([^']+)', zoneId=(\\d+), eventType='([^']+)', severity='([^']+)', state='[^']+'\\}";
@@ -140,6 +155,12 @@ public class DroneSubsystem implements Runnable {
         return null; // No match found
     }
 
+    /**
+     * Sends an acknowledgment to the Scheduler and waits for a response.
+     * If a response is received, it prints the data from the Scheduler.
+     *
+     * @param ack The acknowledgment message to be sent.
+     */
     public void sendAck(String ack){
         // Initial Request Packet
         byte[] requestBuffer            = ack.getBytes();
@@ -162,19 +183,30 @@ public class DroneSubsystem implements Runnable {
         }
     }
 
+    /**
+     * Updates the state to completed and sends an acknowledgment to the Scheduler
+     * indicating that the fire has been extinguished, along with details of the last fire event.
+     */
     public void returnFireCompleted(){
         this.state = "COMPLETE";
         String ack = this + " COMPLETED: Fire has been extinguished " + lastFireEvent;
         sendAck(ack);
     }
 
+    /**
+     * Refills the agent to its maximum capacity
+     * and simulates the drone's travel back to the base zone.
+     */
     public void refillAgent() {
         System.out.println(this + " Refilling agent... ");
         this.agentLevel = MAX_AGENT_CAP;
         simulateDroneTravel(BASE_ZONE);
-
     }
 
+    /**
+     * Simulates the drone travelling towards the zone of the fire event
+     * @param zone The zone of the fire event
+     */
     public void simulateDroneTravel(Zone zone) {
         // Calculate the center of the target zone
         double centerX = (zone.getStartX() + zone.getEndX()) / 2.0;
