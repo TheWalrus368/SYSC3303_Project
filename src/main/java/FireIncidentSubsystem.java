@@ -1,6 +1,10 @@
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.SocketException;
 
 /**
  * FireIncidentSubsystem is responsible for reading fire incident data from a CSV file
@@ -8,17 +12,26 @@ import java.io.IOException;
  */
 public class FireIncidentSubsystem implements Runnable {
     private final String csvFilePath;
-    private final Scheduler scheduler;
+    private DatagramSocket sendReceiveSocket;
+    private final int SCHEDULER_PORT = 7000;
+    private int nextFireID = 1;
+    private static int port;
 
-     /**
+    /**
      * Constructor to initialize the FireIncidentSubsystem with a CSV file path and a Scheduler.
-     * 
+     *
      * @param csvFilePath The path to the CSV file containing fire event data.
-     * @param scheduler   The scheduler that manages fire events.
      */
-    public FireIncidentSubsystem(String csvFilePath, Scheduler scheduler) {
+    public FireIncidentSubsystem(String csvFilePath) {
         this.csvFilePath = csvFilePath;
-        this.scheduler = scheduler;
+        try {
+            // Socket to send and receive packets from the Scheduler
+            sendReceiveSocket = new DatagramSocket();
+            port = sendReceiveSocket.getLocalPort();
+        } catch (SocketException e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
     }
 
     /**
@@ -31,27 +44,86 @@ public class FireIncidentSubsystem implements Runnable {
         try (BufferedReader reader = new BufferedReader(new FileReader(csvFilePath))) {
             String line;
             while ((line = reader.readLine()) != null) {
-                // Parse the CSV line into a FireEvent object
-                String[] parts = line.split(",");
-                String time = parts[0];
-                int zoneId = Integer.parseInt(parts[1]);
-                String eventType = parts[2];
-                String severity = parts[3];
+                // Extract the new fire event
+                FireEvent fireEvent = extractFireEventFromLine(line);
 
-                FireEvent fireEvent = new FireEvent(time, zoneId, eventType, severity);
+                // Form the send packet to report new fire
+                String newFireReport = "NEW FIRE: " + fireEvent;
+                byte[] dataBuffer = newFireReport.getBytes();
+                DatagramPacket dataPacket = new DatagramPacket(dataBuffer, dataBuffer.length, InetAddress.getLocalHost(), SCHEDULER_PORT);
 
-                System.out.println("[FireIncidentSubsystem] NEW FIRE: Sending event to Scheduler: " + fireEvent);
-                scheduler.receiveFireEvent(fireEvent); // Send the event to Scheduler
+                // Form the reception packet for confirmation that fire was extinguished by drone
+                byte[] replyBuffer = new byte[200];
+                DatagramPacket replyPacket = new DatagramPacket(replyBuffer, replyBuffer.length);
 
-                FireEvent receivedEvent = scheduler.receiveDroneAcknowledgement(); // Wait to receive a response
-                System.out.println("[FireIncidentSubsystem] Received response from Scheduler " + receivedEvent);
-
-                Thread.sleep(1000); // Simulate delay between events
-                System.out.print("\n");
+                // Report and communicate with scheduler via RPC
+                rpc_send(dataPacket, replyPacket);
             }
-        } catch (IOException | InterruptedException e) {
+        } catch (IOException e) {
             System.out.println(e);
         }
+    }
+
+    /**
+     * Parses a string from a line in a csv file and returns a fire event representing the fire
+     * @param line String representing a line from the csv file
+     * @return the fire event
+     */
+    private FireEvent extractFireEventFromLine(String line){
+        String[] parts = line.split(",");
+        String time = parts[0];
+        int zoneId = Integer.parseInt(parts[1]);
+        String eventType = parts[2];
+        String severity = parts[3];
+
+        // Create the new fire event
+        FireEvent newFire =  new FireEvent(nextFireID, time, zoneId, eventType, severity);
+        nextFireID++;
+        return newFire;
+    }
+
+    /**
+     * RPC send method that sends data and waits for a synchronous reply.
+     * @param dataPacket The data to send
+     * @param replyPacket The reply from the server
+     */
+    private void rpc_send(DatagramPacket dataPacket, DatagramPacket replyPacket) {
+        try {
+            // STEP 1: Send data to host
+            sendReceiveSocket.send(dataPacket);
+            String data = new String(dataPacket.getData(), 0, dataPacket.getLength());
+            System.out.println("[FireIncidentSubsystem -> Scheduler] Sent request: " + data);
+
+            // STEP 2: Wait to receive ack from host
+            byte[] ackBuffer = new byte[200];
+            DatagramPacket ackPacket = new DatagramPacket(ackBuffer, ackBuffer.length);
+            sendReceiveSocket.receive(ackPacket);
+            String ackData = new String(ackPacket.getData(), 0, ackPacket.getLength());
+            System.out.println("[FireIncidentSubsystem <- Scheduler] Got reply: " + ackData);
+
+            // STEP 3: Send request to host for the server reply
+            String request = "Requesting confirmation of fire extinguished from drone";
+            byte[] requestBuffer = request.getBytes();
+
+            // Datagram packet to send request
+            DatagramPacket requestPacket = new DatagramPacket(requestBuffer, requestBuffer.length, InetAddress.getLocalHost(), SCHEDULER_PORT);
+            sendReceiveSocket.send(requestPacket);
+
+            // STEP 4: Wait to receive the server's response passed back through the host
+            sendReceiveSocket.receive(replyPacket);
+            String reply = new String(replyPacket.getData(), 0, replyPacket.getLength());
+            System.out.println("[Drone -> Scheduler -> FireIncidentSubsystem] Got reply: " + reply + "\n");
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static int getPort(){ return port; }
+
+    public static void main(String args[]){
+        Thread f = new Thread(new FireIncidentSubsystem("fire_events.csv"));
+        f.start();
     }
 
 }

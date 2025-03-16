@@ -1,30 +1,49 @@
-/**
- * The DroneSubsystem class represents a drone responsible for handling fire-fighting tasks.
- * It interacts with the Scheduler to receive fire events, manage its agent level, and complete tasks.
- * This class runs as a separate thread and transitions through states using the DroneStateMachine.
- */
+import java.io.IOException;
+import java.net.*;
+import java.util.regex.*;
+
 public class DroneSubsystem implements Runnable {
     private int droneID;
-    private final Scheduler scheduler;
-    private final DroneStateMachine stateMachine;
+    //private final DroneStateMachine stateMachine;
     private int agentLevel;
-    private FireEvent lastFireEvent; // Store last fire event (in case the fire has not been fully put out)
-    private boolean fireEventComplete; 
-
+    private FireEvent currentFireEvent;
+    public FireEvent lastFireEvent;
+    private Boolean fireEventComplete = false;
     private static final int MAX_AGENT_CAP = 15; // Max payload is 15kg
+    private static final int SPEED = 200;
+    private DatagramSocket sendSocket, receiveSocket;
+    private static final int BASE_PORT = 6000;
+    private static final int SCHEDULER_PORT = 7000;
+    private int DRONE_PORT;
+    private double droneX;
+    private double droneY;
+
+    private String state;
+
+    private final Zone BASE_ZONE = new Zone(0, 0, 0, 0, 0);
 
     /**
      * Constructs a DroneSubsystem with a reference to the Scheduler.
      * Initializes the drone state machine and sets the agent level to full capacity.
-     * 
-     * @param scheduler The Scheduler instance managing fire events.
+     *
+     * @param droneID the ID of the drone
      */
-    public DroneSubsystem(Scheduler scheduler, int droneID) {
+    public DroneSubsystem(int droneID) {
         this.droneID = droneID;
-        this.scheduler = scheduler;
-        this.stateMachine = new DroneStateMachine(this);
+        //this.stateMachine = new DroneStateMachine(this);
         this.agentLevel = MAX_AGENT_CAP; // Start with full agent
-        this.fireEventComplete = false;
+        this.DRONE_PORT = BASE_PORT + droneID;
+        this.currentFireEvent = null;
+        this.lastFireEvent = null;
+
+        try {
+            sendSocket      = new DatagramSocket();
+            receiveSocket   = new DatagramSocket(DRONE_PORT);
+
+        } catch (SocketException se) {
+            se.printStackTrace();
+            System.exit(1);
+        }
     }
 
     /**
@@ -33,21 +52,162 @@ public class DroneSubsystem implements Runnable {
      */
     @Override
     public void run() {
-        try {
-            while (true) {
-                // Handle state from DroneStateMachine
-                stateMachine.handleState();
+        while (true) {
+            // Register the drone with the scheduler and fetch any new fires the scheduler assigns to this drone
+            // BLOCK for reply
+            currentFireEvent = fetchFireTask();
+
+            if (currentFireEvent != null) {
+                // Complete any new fire received
+                completeTask(currentFireEvent);
+                // Send ack back to the scheduler and BLOCK waiting for reply
+                returnFireCompleted();
             }
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+            // No current fire from the scheduler to service
+            else{
+                System.out.println("Waiting for new fire... Actually why am I here?");
+            }
+
         }
     }
 
-    public int getDroneID(){ return droneID; }
-    
+    public synchronized DatagramPacket rpc_send(DatagramPacket requestPacket, DatagramPacket receivePacket){
+       try{
+           // STEP 1: Send a request to scheduler for any new fires / register to drone to the schedulers knowledge
+           String sendData            = new String(requestPacket.getData(), 0, requestPacket.getLength());
+           System.out.println("[Drone -> Scheduler] Sending Drone request: " + sendData);
+           sendSocket.send(requestPacket);
+
+           // STEP 2: Wait to receive reply from host with new data
+           receiveSocket.receive(receivePacket);
+           String receiveData            = new String(receivePacket.getData(), 0, receivePacket.getLength());
+           System.out.println("[Drone <- Scheduler] Drone received: " + receiveData);
+       }
+       catch (IOException e){
+           e.printStackTrace();
+       }
+        return receivePacket;
+    }
+
+    /**
+     * Fetches a fire event task from the scheduler.
+     * If the last fire event is not yet fully extinguished, the drone will continue with it.
+     *
+     * @return The fire event task assigned to the drone.
+     */
+    public FireEvent fetchFireTask() {
+        // Initial Request Packet
+        this.state = "READY";
+        String requestData              = this + "READY: Ready to service any new fires";
+        byte[] requestBuffer            = requestData.getBytes();
+        DatagramPacket requestPacket    = null;
+        try {
+            requestPacket = new DatagramPacket(requestBuffer, requestBuffer.length,
+                    InetAddress.getLocalHost(), SCHEDULER_PORT);
+        } catch (UnknownHostException e) {
+            throw new RuntimeException(e);
+        }
+
+        // Response packet with any new fire from the Scheduler
+        byte[] receiveBuffer           = new byte[200];
+        DatagramPacket receivePacket   = new DatagramPacket(receiveBuffer, receiveBuffer.length);
+
+        // Send packet and BLOCK on reception for data (new fire event)
+        DatagramPacket dataPacket = rpc_send(requestPacket, receivePacket);
+
+        // Handle the client request and send ack back to Scheduler
+        String data = new String(dataPacket.getData(), 0, dataPacket.getLength());
+        System.out.println(this + " Received: " + data + " from Scheduler(" + dataPacket.getAddress() + ":" + dataPacket.getPort());
+
+        // Process the request returned from the scheduler and return the fire event
+        return parseDataToFireEvent(data);
+    }
+
+    public FireEvent parseDataToFireEvent(String data) {
+        // Updated regex pattern to correctly extract values
+        String pattern = "NEW FIRE: FireEvent\\{'ID=(\\d+)', time='([^']+)', zoneId=(\\d+), eventType='([^']+)', severity='([^']+)', state='[^']+'\\}";
+        Pattern regex = Pattern.compile(pattern);
+        Matcher matcher = regex.matcher(data);
+
+        if (matcher.find()) {
+            int fireID = Integer.parseInt(matcher.group(1));
+            String time = matcher.group(2);
+            int zoneId = Integer.parseInt(matcher.group(3));
+            String eventType = matcher.group(4);
+            String severity = matcher.group(5);
+            return new FireEvent(fireID, time, zoneId, eventType, severity);
+        }
+        return null; // No match found
+    }
+
+    public void sendAck(String ack){
+        // Initial Request Packet
+        byte[] requestBuffer            = ack.getBytes();
+        try {
+            DatagramPacket requestPacket = new DatagramPacket(requestBuffer, requestBuffer.length,
+                                                              InetAddress.getLocalHost(), SCHEDULER_PORT);
+
+            // Response packet with any new fire from the Scheduler
+            byte[] receiveBuffer           = new byte[200];
+            DatagramPacket receivePacket   = new DatagramPacket(receiveBuffer, receiveBuffer.length);
+
+            // Send packet and BLOCK on reception for data (new fire event)
+            DatagramPacket dataPacket = rpc_send(requestPacket, receivePacket);
+
+            // Handle the client request and send ack back to Scheduler
+            String data = new String(dataPacket.getData(), 0, dataPacket.getLength());
+            System.out.println(this + " Received: " + data + " from Scheduler(" + dataPacket.getAddress() + ":" + dataPacket.getPort());
+        } catch (UnknownHostException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void returnFireCompleted(){
+        this.state = "COMPLETE";
+        String ack = this + "COMPLETED: Fire has been extinguished " + lastFireEvent;
+        sendAck(ack);
+    }
+
+    public void refillAgent() {
+        System.out.println(this + " Refilling agent... ");
+        this.agentLevel = MAX_AGENT_CAP;
+        simulateDroneTravel(BASE_ZONE);
+
+    }
+
+    public void simulateDroneTravel(Zone zone) {
+        // Calculate the center of the target zone
+        double centerX = (zone.getStartX() + zone.getEndX()) / 2.0;
+        double centerY = (zone.getStartY() + zone.getEndY()) / 2.0;
+
+        // Calculate the distance to the center
+        double distance = Math.sqrt(Math.pow(centerX - droneX, 2) + Math.pow(centerY - droneY, 2));
+
+        // Assume a fixed speed (units per second)
+
+        // Calculate travel time in milliseconds
+        long travelTimeMillis = (long) ((distance / SPEED) * 1000);
+
+        try {
+            System.out.println(this + " Traveling to: ZONE " + zone.getID() + " (" + centerX + ", " + centerY + "), ETA: " + travelTimeMillis/1000 + "s");
+
+            // Simulate time travelling by sleeping
+            Thread.sleep(travelTimeMillis);
+
+            // Update the drones position once its reached its destination
+            this.droneX = centerX;
+            this.droneY = centerY;
+
+            System.out.println(this + " arrived at destination.");
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            System.err.println(this + " Travel interrupted!");
+        }
+    }
+
     /**
      * Checks if the agent tank is empty.
-     * 
+     *
      * @return true if the agent tank is empty, false otherwise.
      */
     public boolean isAgentEmpty() {
@@ -55,100 +215,51 @@ public class DroneSubsystem implements Runnable {
     }
 
     /**
-     * Refills the agent tank to its maximum capacity.
-     */
-    public void refillAgent() {
-        agentLevel = MAX_AGENT_CAP;
-    }
-
-    /**
-     * Gets the current agent level.
-     * 
-     * @return The current agent level in kg.
-     */
-    public int getAgentLevel() {
-        return agentLevel;
-    }
-
-    /**
-     * Notifies the scheduler when the drone arrives at a fire location.
-     * 
-     * @param event The fire event the drone is responding to.
-     * @param state The current state of the drone.
-     */
-    public void notifyArrival(FireEvent event, String state) {
-        if (event != null) {
-            System.out.println("[DroneSubsystem][STATE:"+state+"] Drone has arrived at fire location: " + event);
-            scheduler.sendDroneAcknowledgement(event); // Notify the scheduler
-        }
-    }
-
-    /**
-     * Notifies the scheduler when the drone returns to base.
-     * 
-     * @param event The fire event the drone was responding to.
-     * @param state The current state of the drone.
-     */
-    public void notifyReturn(FireEvent event, String state) {
-        if (event != null) {
-            System.out.println("[DroneSubsystem][STATE:"+state+"] Drone has returned to the base from: " + event);
-            scheduler.sendDroneAcknowledgement(event); // Notify the scheduler
-        }
-    }
-
-     /**
-     * Fetches a fire event task from the scheduler.
-     * If the last fire event is not yet fully extinguished, the drone will continue with it.
-     * 
-     * @return The fire event task assigned to the drone.
-     */
-    public FireEvent fetchTask() {
-        // If there was a previous fire event that has not been fully put out,
-        // return this event so that the drone returns to it
-        if (lastFireEvent != null && !fireEventComplete) {
-            return lastFireEvent;
-        } else {
-            // Fetch a new task if no previous fire event or fire was put out
-            FireEvent newTask = scheduler.assignTaskToDrone();
-            lastFireEvent = newTask;
-            fireEventComplete = false; // Reset flag for new task
-            return newTask;
-        }
-    }
-
-     /**
      * Completes a fire event task by dropping the extinguishing agent.
      * If the fire is not fully extinguished, the drone may need to refill and return.
-     * 
+     *
      * @param task The fire event task being handled.
      */
     public void completeTask(FireEvent task) {
-        System.out.println("[DroneSubsystem"+droneID+"][STATE:DROPPING] Task started with " + task.getRemainingWaterNeeded() + "L remaining to extinguish.");
-    
+        System.out.println(this + "Extinguishing Starting for:  " + task + ". " + task.getRemainingWaterNeeded() + "L remaining to extinguish.");
+
         while (task.getRemainingWaterNeeded() > 0) {
             if (agentLevel > 0) {
+                simulateDroneTravel(Scheduler.getZone(task.getZoneId()));
                 int waterToDrop = Math.min(agentLevel, task.getRemainingWaterNeeded());
                 agentLevel -= waterToDrop;
                 task.extinguish(waterToDrop);
-                System.out.println("[DroneSubsystem"+droneID+"][STATE:DROPPING] Dropped: " + waterToDrop + "L of agent. " + agentLevel + "L left.");
+                System.out.println(this + " Dropped: " + waterToDrop + "L of agent. " + agentLevel + "L left.");
             }
-    
+
             if (task.getRemainingWaterNeeded() <= 0) {
                 fireEventComplete = true;
-                stateMachine.setState("IDLE");
+                //stateMachine.setState("IDLE");
+                //Break as task has been completed
                 break;
             }
-    
-            if (agentLevel == 0) {
-                System.out.println("[DroneSubsystem"+droneID+"][STATE:DROPPING] Not enough agent to complete the task. Going to refill...");
-                stateMachine.setState("REFILLING");
-                break;
+
+            if (isAgentEmpty()) {
+                System.out.println(this + " Not enough agent to complete the task. Going to refill...");
+                refillAgent();
+                //stateMachine.setState("REFILLING");
             }
         }
-    
+
         if (fireEventComplete) {
-            System.out.println("[DroneSubsystem"+droneID+"][STATE:DROPPING] Sending response back to the Scheduler: " + task);
-            scheduler.sendDroneAcknowledgement(task);
+            System.out.println(this + " Fire has been fully extinguished: " + task);
+            lastFireEvent = currentFireEvent;
+            currentFireEvent = null;
         }
-    }    
+    }
+
+    @Override
+    public String toString() {
+        return "[DRONE: " + this.droneID + "]" + "[PORT: " + this.DRONE_PORT + "]" + "[STATE: " + this.state + "]";
+    }
+
+    public static void main(String args[]){
+        Thread d = new Thread(new DroneSubsystem(100));
+        d.start();
+    }
 }

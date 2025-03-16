@@ -8,9 +8,11 @@ public class FireEvent {
     private final int zoneId;        // Fire zone ID
     private final String eventType;  // Type of event (FIRE_DETECTED or DRONE_REQUEST)
     private final String severity;   // Severity level (High, Moderate, Low)
-    private int remainingWaterNeeded; 
-    private int fireID;
-    private static int nextFireID = 1;
+    private int remainingWaterNeeded;
+    private final int fireID;
+    private String state;
+    private int port;
+
 
     /**
      * Constructs a new FireEvent instance.
@@ -20,14 +22,14 @@ public class FireEvent {
      * @param eventType The type of event (e.g., FIRE_DETECTED, DRONE_REQUEST).
      * @param severity  The severity of the fire (High, Moderate, Low).
      */
-    public FireEvent(String time, int zoneId, String eventType, String severity) {
+    public FireEvent(int fireID, String time, int zoneId, String eventType, String severity) {
+        this.fireID = fireID;
         this.time = time;
         this.zoneId = zoneId;
         this.eventType = eventType;
         this.severity = severity;
-        this.fireID = nextFireID;
-        nextFireID ++;
         this.remainingWaterNeeded = getWaterRequired();
+        this.state = "ACTIVE";
     }
 
     /**
@@ -48,7 +50,7 @@ public class FireEvent {
         return zoneId;
     }
 
-     /**
+    /**
      * Gets the type of fire event.
      *
      * @return The event type (FIRE_DETECTED or DRONE_REQUEST).
@@ -94,6 +96,13 @@ public class FireEvent {
     }
 
     /**
+     * Gets the current state of the fire
+     *
+     * @return The String state of the fire
+     */
+    public String getState(){ return state; }
+
+    /**
      * Determines the water required based on fire severity.
      *
      * @return The amount of water required to extinguish the fire.
@@ -101,16 +110,16 @@ public class FireEvent {
     public int getWaterRequired() {
         switch (severity.toUpperCase()){
             case "HIGH":
-            return 30; // High severity needs 30L
+                return 30; // High severity needs 30L
 
             case "MODERATE":
-            return 20; // Moderate severity needs 20L
+                return 20; // Moderate severity needs 20L
 
             case "LOW":
-            return 10; // Low severity needs 10L
+                return 10; // Low severity needs 10L
 
             default:
-            return 0;
+                return 0;
         }
     }
 
@@ -121,11 +130,13 @@ public class FireEvent {
      */
     @Override
     public String toString() {
-        return "FireEvent{" +
-                "time='" + time + '\'' +
+        return "FireEvent{" + '\'' +
+                "ID=" + fireID + '\'' +
+                ", time='" + time + '\'' +
                 ", zoneId=" + zoneId +
                 ", eventType='" + eventType + '\'' +
                 ", severity='" + severity + '\'' +
+                ", state='" + state + '\'' +
                 '}';
     }
 }
