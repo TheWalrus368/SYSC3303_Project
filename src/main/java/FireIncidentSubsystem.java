@@ -109,7 +109,7 @@ public class FireIncidentSubsystem implements Runnable {
             // STEP 4: Wait to receive the server's response passed back through the host
             sendReceiveSocket.receive(replyPacket);
             String reply = new String(replyPacket.getData(), 0, replyPacket.getLength());
-            System.out.println("[Drone -> Scheduler -> FireIncidentSubsystem] Got reply: " + reply + "\n");
+            System.out.println("[Drone -> Scheduler -> FireIncidentSubsystem] Got reply: " + reply);
 
         } catch (IOException e) {
             e.printStackTrace();

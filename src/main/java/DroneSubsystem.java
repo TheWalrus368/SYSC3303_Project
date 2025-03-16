@@ -98,7 +98,7 @@ public class DroneSubsystem implements Runnable {
     public FireEvent fetchFireTask() {
         // Initial Request Packet
         this.state = "READY";
-        String requestData              = this + "READY: Ready to service any new fires";
+        String requestData              = this + " READY: Ready to service any new fires";
         byte[] requestBuffer            = requestData.getBytes();
         DatagramPacket requestPacket    = null;
         try {
@@ -164,7 +164,7 @@ public class DroneSubsystem implements Runnable {
 
     public void returnFireCompleted(){
         this.state = "COMPLETE";
-        String ack = this + "COMPLETED: Fire has been extinguished " + lastFireEvent;
+        String ack = this + " COMPLETED: Fire has been extinguished " + lastFireEvent;
         sendAck(ack);
     }
 
@@ -221,7 +221,7 @@ public class DroneSubsystem implements Runnable {
      * @param task The fire event task being handled.
      */
     public void completeTask(FireEvent task) {
-        System.out.println(this + "Extinguishing Starting for:  " + task + ". " + task.getRemainingWaterNeeded() + "L remaining to extinguish.");
+        System.out.println(this + " Extinguishing Starting for:  " + task + ". " + task.getRemainingWaterNeeded() + "L remaining to extinguish.");
 
         while (task.getRemainingWaterNeeded() > 0) {
             if (agentLevel > 0) {

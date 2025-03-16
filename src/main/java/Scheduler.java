@@ -11,10 +11,7 @@ class Scheduler implements Runnable{
     private static final int RECEIVE_PORT = 7000;
     private DatagramSocket receiveSocket, sendSocket;
     private BoundedBuffer fireToDroneBuffer, droneToFireBuffer;
-
     private LinkedList<DroneStatus> drones = new LinkedList<>();  // Changed to LinkedList
-    // Array for confirmations
-
     private Thread receiveThread;
 
     /**
@@ -69,10 +66,9 @@ class Scheduler implements Runnable{
             String requestData            = new String(requestPacket.getData(), 0, requestPacket.getLength());
             EventStatus eventStatus       = handleEvent(requestData);
 
-            DatagramPacket droneAcknowledgementPacket;
             switch(eventStatus.getCommand()) {
+                // NEW DRONE READY TO EXTINGUISH ANY AVAILABLE FIRE
                 case "READY":
-                    // NEW DRONE READY TO EXTINGUISH ANY AVAILABLE FIRE
                     // Step 3 (READY): Check for any unassigned fires. If there is a fire reply with fire
                     String fireRequest = fireToDroneBuffer.removeFirst().toString();
                     byte[] fireRequestBuffer = fireRequest.getBytes();
@@ -83,16 +79,20 @@ class Scheduler implements Runnable{
                         selectedDrone = getAvailableDrone();
                     }
 
-                    droneAcknowledgementPacket = new DatagramPacket(fireRequestBuffer,
-                            fireRequestBuffer.length,
-                            InetAddress.getLocalHost(),
-                            selectedDrone.getPort());
-                    System.out.println("[Scheduler -> Drone] Reply from READY request: " + fireRequest + "\n");
-                    sendSocket.send(droneAcknowledgementPacket);
+                    // Create a packet sending the drone the fire to extinguish
+                    DatagramPacket assignDroneFirePacket = new DatagramPacket(fireRequestBuffer,
+                                                                    fireRequestBuffer.length,
+                                                                    InetAddress.getLocalHost(),
+                                                                    selectedDrone.getPort());
+
+                    System.out.println("[Scheduler -> Drone] Reply for DRONE request with:" + fireRequest);
+                    sendSocket.send(assignDroneFirePacket);
+
                     // Update the drones status to being used
                     updateDroneState(selectedDrone.getDroneID(), "USED");
                     break;
 
+                // DRONE INDICATING IT HAS COMPLETED EXTINGUISHING FIRE
                 case "COMPLETE":
                     // Step 3 (COMPLETE): Add to droneToFireBuffer
                     fireID = Integer.parseInt(requestData.replaceAll(".*ID=(\\d+).*", "$1"));
@@ -102,15 +102,15 @@ class Scheduler implements Runnable{
                     updateDroneState(eventStatus.getDroneStatus().getDroneID(), "READY");
 
                     // Step 4 (COMPLETE): Send ACK
-                    String msg = "ACK";
-                    byte[] droneReply = msg.getBytes();
+                    String ack = "FIRE EXTINGUISHED: FireID=" + fireID;
+                    byte[] droneReply = ack.getBytes();
                     port = eventStatus.getDroneStatus().getPort();
-                    droneAcknowledgementPacket = new DatagramPacket(droneReply,
+                    DatagramPacket droneFireCompletePacket = new DatagramPacket(droneReply,
                             droneReply.length,
                             InetAddress.getLocalHost(),
                             port);
-                    System.out.println("[Scheduler -> Drone] reply from COMPLETE request: " + msg + "\n");
-                    sendSocket.send(droneAcknowledgementPacket);
+                    System.out.println("[Scheduler -> Drone] reply from COMPLETE request: " + ack);
+                    sendSocket.send(droneFireCompletePacket);
                     break;
 
                 case "FIRE":
@@ -118,13 +118,13 @@ class Scheduler implements Runnable{
                     fireToDroneBuffer.addLast(requestData);
 
                     // Step 4 (FireEvent): Send Ack
-                    String acknowledgment = "ACK(" + requestData + ")";
+                    String acknowledgment = "NEW FIRE RECEIVED: " + requestData;
                     byte[] acknowledgmentBuffer = (acknowledgment).getBytes();
                     DatagramPacket acknowledgementPacket = new DatagramPacket(acknowledgmentBuffer,
                             acknowledgmentBuffer.length,
                             InetAddress.getLocalHost(),
                             requestPacket.getPort());
-                    System.out.println("[Scheduler -> FireIncidentSubsystem] Sent immediate " + acknowledgment + " to " + InetAddress.getLocalHost() + ":" + requestPacket.getPort());
+                    System.out.println("[Scheduler -> FireIncidentSubsystem] Sent acknowledgement: " + acknowledgment + " to " + InetAddress.getLocalHost() + ":" + requestPacket.getPort());
                     sendSocket.send(acknowledgementPacket);
                     break;
 
@@ -141,13 +141,13 @@ class Scheduler implements Runnable{
 
                     droneToFireBuffer.removeFireEventByID(fireID);
 
-                    String confirmation = "FIRE OUT";
+                    String confirmation = "FIRE [ID:" + fireID + "] HAS BEEN EXTINGUISHED ";
                     byte[] confirmReply = confirmation.getBytes();
-                    droneAcknowledgementPacket = new DatagramPacket(confirmReply,
+                    DatagramPacket droneAcknowledgementPacket = new DatagramPacket(confirmReply,
                             confirmReply.length,
                             InetAddress.getLocalHost(),
                             requestPacket.getPort());
-                    System.out.println("[Scheduler -> FireIncidentSubsystem] Fire: " + fireID + " is out: " + confirmation + "\n");
+                    System.out.println("[Scheduler -> FireIncidentSubsystem] Fire: " + fireID + " is out: " + confirmation);
                     sendSocket.send(droneAcknowledgementPacket);
 
                     break;
