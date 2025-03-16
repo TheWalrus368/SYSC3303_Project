@@ -78,4 +78,43 @@ public class BoundedBuffer
     public String toString(){
         return Arrays.toString(buffer);
     }
+
+    public synchronized Object removeFireEventByID(int fireID) {
+        while (true) {
+            while (!readable) {
+                try {
+                    wait(); // Wait if buffer is empty
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    return null; // Exit if interrupted
+                }
+            }
+
+            // Search for the FireEvent
+            for (int i = 0; i < buffer.length; i++) {
+                if (buffer[i] instanceof Integer) { // Check if it's an Integer
+                    int id = (Integer) buffer[i];  // Safely cast
+                    if (id == fireID) {
+                        buffer[i] = null; // Remove the event
+                        notifyAll(); // Notify waiting threads
+                        return true;
+                    }
+                }
+            }
+
+            // If FireEvent not found, wait for new data and try again
+            try {
+                wait();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return null; // Exit if interrupted
+            }
+        }
+    }
+
+
+
+
+
+
 }

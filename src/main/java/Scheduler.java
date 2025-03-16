@@ -15,6 +15,8 @@ class Scheduler implements Runnable{
     private LinkedList<DroneStatus> drones = new LinkedList<>();  // Changed to LinkedList
     // Array for confirmations
 
+    private Thread receiveThread;
+
     /**
      * Creates a new host by:
      * Initializing sockets to receive packets from the client and server
@@ -39,55 +41,62 @@ class Scheduler implements Runnable{
     @Override
     public void run() {
         while(true) {
-            // Check if any confirmation fires are done()
-            RCP_Receive();
+            DatagramPacket requestPacket;
+            try {
+                // Step 1: Wait to Receive any messages
+                byte[] droneRequestBuffer = new byte[200];
+                requestPacket = new DatagramPacket(droneRequestBuffer, droneRequestBuffer.length);
+                receiveSocket.receive(requestPacket);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
+            receiveThread = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    RCP_Receive(requestPacket);
+                }
+            });
+            receiveThread.start();
         }
     }
 
-    private void RCP_Receive(){
+    private void RCP_Receive(DatagramPacket requestPacket){
         try{
-            // Step 1: Wait to Receive any messages
-            byte[] droneRequestBuffer     = new byte[200];
-            DatagramPacket requestPacket  = new DatagramPacket(droneRequestBuffer, droneRequestBuffer.length);
-            receiveSocket.receive(requestPacket);
-
+            int port;
+            int fireID;
             // Step 2: Parse what they want
             String requestData            = new String(requestPacket.getData(), 0, requestPacket.getLength());
             EventStatus eventStatus       = handleEvent(requestData);
 
-            //System.out.println("[STATE: " + eventStatus.getState() + "]");
+            DatagramPacket droneAcknowledgementPacket;
             switch(eventStatus.getCommand()) {
                 case "READY":
                     // NEW DRONE READY TO EXTINGUISH ANY AVAILABLE FIRE
                     // Step 3 (READY): Check for any unassigned fires. If there is a fire reply with fire
-                    if (fireToDroneBuffer.getCount() != 0 ) {
-                        String fireRequest = fireToDroneBuffer.removeFirst().toString();
-                        byte[] fireRequestBuffer = fireRequest.getBytes();
+                    String fireRequest = fireToDroneBuffer.removeFirst().toString();
+                    byte[] fireRequestBuffer = fireRequest.getBytes();
 
-                        // Select an available drone to handle the fire
-                        DroneStatus selectedDrone = null;
-                        while (selectedDrone == null){
-                            selectedDrone = getAvailableDrone();
-                        }
+                    // Select an available drone to handle the fire
+                    DroneStatus selectedDrone = null;
+                    while (selectedDrone == null){
+                        selectedDrone = getAvailableDrone();
+                    }
 
-                        DatagramPacket droneAcknowledgementPacket = new DatagramPacket(fireRequestBuffer,
-                                fireRequestBuffer.length,
-                                InetAddress.getLocalHost(),
-                                getDronePort(selectedDrone.getPort()));
-                        System.out.println("[Scheduler -> Drone] Reply from READY request: " + fireRequest + "\n");
-                        sendSocket.send(droneAcknowledgementPacket);
-                        // Update the drones status to being used
-                        updateDroneState(selectedDrone.getDroneID(), "USED");
-                    }
-                    else {
-                        System.out.println("No Fires Available");
-                        // Step 4 (READY): If there are no fires to service, otherwise ignore the drone, make it wait
-                        break;
-                    }
+                    droneAcknowledgementPacket = new DatagramPacket(fireRequestBuffer,
+                            fireRequestBuffer.length,
+                            InetAddress.getLocalHost(),
+                            selectedDrone.getPort());
+                    System.out.println("[Scheduler -> Drone] Reply from READY request: " + fireRequest + "\n");
+                    sendSocket.send(droneAcknowledgementPacket);
+                    // Update the drones status to being used
+                    updateDroneState(selectedDrone.getDroneID(), "USED");
+                    break;
 
                 case "COMPLETE":
                     // Step 3 (COMPLETE): Add to droneToFireBuffer
-                    droneToFireBuffer.addLast(eventStatus.getDroneStatus().toString());
+                    fireID = Integer.parseInt(requestData.replaceAll(".*ID=(\\d+).*", "$1"));
+                    droneToFireBuffer.addLast(fireID);
 
                     // Update the drone's state to READY again
                     updateDroneState(eventStatus.getDroneStatus().getDroneID(), "READY");
@@ -95,21 +104,13 @@ class Scheduler implements Runnable{
                     // Step 4 (COMPLETE): Send ACK
                     String msg = "ACK";
                     byte[] droneReply = msg.getBytes();
-                    DatagramPacket droneAcknowledgementPacket = new DatagramPacket(droneReply,
+                    port = eventStatus.getDroneStatus().getPort();
+                    droneAcknowledgementPacket = new DatagramPacket(droneReply,
                             droneReply.length,
                             InetAddress.getLocalHost(),
-                            getDronePort(eventStatus.getDroneStatus().getPort()));
+                            port);
                     System.out.println("[Scheduler -> Drone] reply from COMPLETE request: " + msg + "\n");
                     sendSocket.send(droneAcknowledgementPacket);
-
-                    // Step 5 (COMPLETE): Send to FireIncident
-                    byte[] confirmReply = requestData.getBytes();
-                    DatagramPacket confirmPacket = new DatagramPacket(confirmReply,
-                            confirmReply.length,
-                            InetAddress.getLocalHost(),
-                            FireIncidentSubsystem.getPort());
-                    System.out.println("[Scheduler -> FireIncidentSubsystem] Fire Extinguished: " + msg + "\n");
-                    sendSocket.send(confirmPacket);
                     break;
 
                 case "FIRE":
@@ -129,8 +130,26 @@ class Scheduler implements Runnable{
 
                 case "CONFIRMATION":
                     // Fire Incident Subsystem waiting for confirmation fire is out.
-                    // Look for the fire and confirm it's been extinguished
-                    String response = droneToFireBuffer.
+                    String pattern = "FireEvent\\{'ID=(\\d+)'";
+                    Pattern regex = Pattern.compile(pattern);
+                    Matcher matcher = regex.matcher(requestData);
+
+                    fireID = -1;
+                    if (matcher.find()) {
+                        fireID = Integer.parseInt(matcher.group(1));
+                    }
+
+                    droneToFireBuffer.removeFireEventByID(fireID);
+
+                    String confirmation = "FIRE OUT";
+                    byte[] confirmReply = confirmation.getBytes();
+                    droneAcknowledgementPacket = new DatagramPacket(confirmReply,
+                            confirmReply.length,
+                            InetAddress.getLocalHost(),
+                            requestPacket.getPort());
+                    System.out.println("[Scheduler -> FireIncidentSubsystem] Fire: " + fireID + " is out: " + confirmation + "\n");
+                    sendSocket.send(droneAcknowledgementPacket);
+
                     break;
 
                 case "ERROR":
@@ -140,7 +159,6 @@ class Scheduler implements Runnable{
         } catch(IOException e){
             e.printStackTrace();
         }
-
     }
 
     public EventStatus handleEvent(String data) {
@@ -155,16 +173,18 @@ class Scheduler implements Runnable{
             String state = matcher.group(3);
 
             DroneStatus newDrone = new DroneStatus(droneID, port, state, null);
-            for (DroneStatus existingDrone : drones) {
-                if (existingDrone.getDroneID() == newDrone.getDroneID()) {
-                    // An existing drone has COMPLETED its fire service
-                    if (newDrone.getState().equals("COMPLETED")){
-                        return new EventStatus("COMPLETED", newDrone);
+            synchronized (drones) {
+                for (DroneStatus existingDrone : drones) {
+                    if (existingDrone.getDroneID() == newDrone.getDroneID()) {
+                        // An existing drone has COMPLETED its fire service
+                        if (newDrone.getState().equals("COMPLETE")) {
+                            return new EventStatus("COMPLETE", newDrone);
+                        }
                     }
                 }
+                // New drone, register it to the list of drones
+                drones.add(newDrone);
             }
-            // New drone, register it to the list of drones
-            drones.add(newDrone);
 
             // Create and return a new event to handle a ready drone
             return new EventStatus("READY");
@@ -190,16 +210,17 @@ class Scheduler implements Runnable{
         return -1;
     }
 
-    public DroneStatus getAvailableDrone(){
+    public synchronized DroneStatus getAvailableDrone(){
         for (DroneStatus drone: drones){
             if (drone.getState().equals("READY")){
+                drone.setState("USED");
                 return drone;
             }
         }
         return null;
     }
 
-    public void updateDroneState(int droneID, String newState) {
+    public synchronized void updateDroneState(int droneID, String newState) {
         for (DroneStatus drone: drones){
             if (drone.getDroneID() == droneID){
                 drone.setState(newState);

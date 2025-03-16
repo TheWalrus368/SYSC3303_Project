@@ -10,7 +10,7 @@ public class DroneSubsystem implements Runnable {
     public FireEvent lastFireEvent;
     private Boolean fireEventComplete = false;
     private static final int MAX_AGENT_CAP = 15; // Max payload is 15kg
-    private static final int SPEED = 200;
+    private static final int SPEED = 100;
     private DatagramSocket sendSocket, receiveSocket;
     private static final int BASE_PORT = 6000;
     private static final int SCHEDULER_PORT = 7000;
@@ -258,8 +258,4 @@ public class DroneSubsystem implements Runnable {
         return "[DRONE: " + this.droneID + "]" + "[PORT: " + this.DRONE_PORT + "]" + "[STATE: " + this.state + "]";
     }
 
-    public static void main(String args[]){
-        Thread d = new Thread(new DroneSubsystem(100));
-        d.start();
-    }
 }

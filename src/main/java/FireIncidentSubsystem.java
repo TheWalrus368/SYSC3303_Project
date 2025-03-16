@@ -40,29 +40,26 @@ public class FireIncidentSubsystem implements Runnable {
      */
     @Override
     public void run() {
-        // Parse the csv file and create fire events
         try (BufferedReader reader = new BufferedReader(new FileReader(csvFilePath))) {
             String line;
             while ((line = reader.readLine()) != null) {
-                // Extract the new fire event
                 FireEvent fireEvent = extractFireEventFromLine(line);
 
-                // Form the send packet to report new fire
                 String newFireReport = "NEW FIRE: " + fireEvent;
                 byte[] dataBuffer = newFireReport.getBytes();
                 DatagramPacket dataPacket = new DatagramPacket(dataBuffer, dataBuffer.length, InetAddress.getLocalHost(), SCHEDULER_PORT);
 
-                // Form the reception packet for confirmation that fire was extinguished by drone
                 byte[] replyBuffer = new byte[200];
                 DatagramPacket replyPacket = new DatagramPacket(replyBuffer, replyBuffer.length);
 
-                // Report and communicate with scheduler via RPC
-                rpc_send(dataPacket, replyPacket, fireEvent);
+                // Create and start a new thread for each RPC send
+                new Thread(() -> rpc_send(dataPacket, replyPacket, fireEvent)).start();
             }
         } catch (IOException e) {
             System.out.println(e);
         }
     }
+
 
     /**
      * Parses a string from a line in a csv file and returns a fire event representing the fire
@@ -120,10 +117,5 @@ public class FireIncidentSubsystem implements Runnable {
     }
 
     public static int getPort(){ return port; }
-
-    public static void main(String args[]){
-        Thread f = new Thread(new FireIncidentSubsystem("fire_events.csv"));
-        f.start();
-    }
 
 }
