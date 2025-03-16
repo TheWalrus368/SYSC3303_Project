@@ -57,7 +57,7 @@ public class FireIncidentSubsystem implements Runnable {
                 DatagramPacket replyPacket = new DatagramPacket(replyBuffer, replyBuffer.length);
 
                 // Report and communicate with scheduler via RPC
-                rpc_send(dataPacket, replyPacket);
+                rpc_send(dataPacket, replyPacket, fireEvent);
             }
         } catch (IOException e) {
             System.out.println(e);
@@ -87,22 +87,22 @@ public class FireIncidentSubsystem implements Runnable {
      * @param dataPacket The data to send
      * @param replyPacket The reply from the server
      */
-    private void rpc_send(DatagramPacket dataPacket, DatagramPacket replyPacket) {
+    private void rpc_send(DatagramPacket dataPacket, DatagramPacket replyPacket, FireEvent fireEvent) {
         try {
-            // STEP 1: Send data to host
+            // STEP 1: Send data to Scheduler
             sendReceiveSocket.send(dataPacket);
             String data = new String(dataPacket.getData(), 0, dataPacket.getLength());
             System.out.println("[FireIncidentSubsystem -> Scheduler] Sent request: " + data);
 
-            // STEP 2: Wait to receive ack from host
+            // STEP 2: Wait to receive ack from scheduler
             byte[] ackBuffer = new byte[200];
             DatagramPacket ackPacket = new DatagramPacket(ackBuffer, ackBuffer.length);
             sendReceiveSocket.receive(ackPacket);
             String ackData = new String(ackPacket.getData(), 0, ackPacket.getLength());
             System.out.println("[FireIncidentSubsystem <- Scheduler] Got reply: " + ackData);
 
-            // STEP 3: Send request to host for the server reply
-            String request = "Requesting confirmation of fire extinguished from drone";
+            // STEP 3: Send request to scheduler for the drone reply
+            String request = "REQUEST CONFIRMATION: "  + fireEvent;
             byte[] requestBuffer = request.getBytes();
 
             // Datagram packet to send request
