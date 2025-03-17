@@ -21,10 +21,8 @@ public class DroneSubsystem implements Runnable {
     private int DRONE_PORT;
     private double droneX;
     private double droneY;
-
-    private String state;
-
     private final Zone BASE_ZONE = new Zone(0, 0, 0, 0, 0);
+    private String state;
 
     /**
      * Constructs a DroneSubsystem with a reference to the Scheduler.
@@ -39,6 +37,7 @@ public class DroneSubsystem implements Runnable {
         this.DRONE_PORT = BASE_PORT + droneID;
         this.currentFireEvent = null;
         this.lastFireEvent = null;
+        this.state = "IDLE";
 
         try {
             sendSocket      = new DatagramSocket();
@@ -106,31 +105,34 @@ public class DroneSubsystem implements Runnable {
      * @return The fire event task assigned to the drone.
      */
     public FireEvent fetchFireTask() {
-        // Initial Request Packet
-        this.state = "READY";
-        String requestData              = this + " READY: Ready to service any new fires";
-        byte[] requestBuffer            = requestData.getBytes();
-        DatagramPacket requestPacket    = null;
-        try {
-            requestPacket = new DatagramPacket(requestBuffer, requestBuffer.length,
-                    InetAddress.getLocalHost(), SCHEDULER_PORT);
-        } catch (UnknownHostException e) {
-            throw new RuntimeException(e);
-        }
+        if (currentFireEvent == null){
+            // Initial Request Packet
+            this.state = "READY";
+            String requestData              = this + " READY: Ready to service any new fires";
+            byte[] requestBuffer            = requestData.getBytes();
+            DatagramPacket requestPacket    = null;
+            try {
+                requestPacket = new DatagramPacket(requestBuffer, requestBuffer.length,
+                        InetAddress.getLocalHost(), SCHEDULER_PORT);
+            } catch (UnknownHostException e) {
+                throw new RuntimeException(e);
+            }
 
-        // Response packet with any new fire from the Scheduler
-        byte[] receiveBuffer           = new byte[200];
-        DatagramPacket receivePacket   = new DatagramPacket(receiveBuffer, receiveBuffer.length);
+            // Response packet with any new fire from the Scheduler
+            byte[] receiveBuffer           = new byte[200];
+            DatagramPacket receivePacket   = new DatagramPacket(receiveBuffer, receiveBuffer.length);
 
-        // Send packet and BLOCK on reception for data (new fire event)
-        DatagramPacket dataPacket = rpc_send(requestPacket, receivePacket);
+            // Send packet and BLOCK on reception for data (new fire event)
+            DatagramPacket dataPacket = rpc_send(requestPacket, receivePacket);
 
-        // Handle the client request and send ack back to Scheduler
-        String data = new String(dataPacket.getData(), 0, dataPacket.getLength());
-        System.out.println(this + " Received: " + data + " from Scheduler(" + dataPacket.getAddress() + ":" + dataPacket.getPort());
+            // Handle the client request and send ack back to Scheduler
+            String data = new String(dataPacket.getData(), 0, dataPacket.getLength());
+            System.out.println(this + " Received: " + data + " from Scheduler(" + dataPacket.getAddress() + ":" + dataPacket.getPort());
 
-        // Process the request returned from the scheduler and return the fire event
-        return parseDataToFireEvent(data);
+            // Process the request returned from the scheduler and return the fire event
+            currentFireEvent = parseDataToFireEvent(data);
+            }
+        return currentFireEvent;
     }
 
     /**
@@ -198,6 +200,7 @@ public class DroneSubsystem implements Runnable {
      * and simulates the drone's travel back to the base zone.
      */
     public void refillAgent() {
+        setState("REFILLING");
         System.out.println(this + " Refilling agent... ");
         this.agentLevel = MAX_AGENT_CAP;
         simulateDroneTravel(BASE_ZONE);
@@ -208,6 +211,7 @@ public class DroneSubsystem implements Runnable {
      * @param zone The zone of the fire event
      */
     public void simulateDroneTravel(Zone zone) {
+        setState("EN_ROUTE");
         // Calculate the center of the target zone
         double centerX = (zone.getStartX() + zone.getEndX()) / 2.0;
         double centerY = (zone.getStartY() + zone.getEndY()) / 2.0;
@@ -257,8 +261,11 @@ public class DroneSubsystem implements Runnable {
 
         while (task.getRemainingWaterNeeded() > 0) {
             if (agentLevel > 0) {
+                setState("EN_ROUTE");
                 simulateDroneTravel(Scheduler.getZone(task.getZoneId()));
+                setState("DROPPING");
                 int waterToDrop = Math.min(agentLevel, task.getRemainingWaterNeeded());
+                System.out.println(this + " Dropping: " + waterToDrop + "L of agent.");
                 agentLevel -= waterToDrop;
                 task.extinguish(waterToDrop);
                 System.out.println(this + " Dropped: " + waterToDrop + "L of agent. " + agentLevel + "L left.");
@@ -266,7 +273,9 @@ public class DroneSubsystem implements Runnable {
 
             if (task.getRemainingWaterNeeded() <= 0) {
                 fireEventComplete = true;
-                //stateMachine.setState("IDLE");
+                setState("EN_ROUTE");
+                simulateDroneTravel(BASE_ZONE);
+                setState("IDLE");
                 //Break as task has been completed
                 break;
             }
@@ -274,15 +283,23 @@ public class DroneSubsystem implements Runnable {
             if (isAgentEmpty()) {
                 System.out.println(this + " Not enough agent to complete the task. Going to refill...");
                 refillAgent();
-                //stateMachine.setState("REFILLING");
             }
         }
 
         if (fireEventComplete) {
+            setState("IDLE");
             System.out.println(this + " Fire has been fully extinguished: " + task);
+            setState("EN_ROUTE");
+            System.out.println(this + " Returning to base");
+            simulateDroneTravel(BASE_ZONE);
+            setState("IDLE");
             lastFireEvent = currentFireEvent;
             currentFireEvent = null;
         }
+    }
+
+    public void setState(String state){
+        this.state = state;
     }
 
     @Override
