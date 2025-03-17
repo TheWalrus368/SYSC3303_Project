@@ -12,7 +12,6 @@ public class DroneSubsystem implements Runnable {
     private int agentLevel;
     private FireEvent currentFireEvent;
     public FireEvent lastFireEvent;
-    private Boolean fireEventComplete = false;
     private static final int MAX_AGENT_CAP = 15; // Max payload is 15kg
     private static final int SPEED = 100;
     private DatagramSocket sendSocket, receiveSocket;
@@ -21,8 +20,10 @@ public class DroneSubsystem implements Runnable {
     private int DRONE_PORT;
     private double droneX;
     private double droneY;
-    private final Zone BASE_ZONE = new Zone(0, 0, 0, 0, 0);
-    private String state;
+    private Zone currentZone;
+    private Zone nextDestination;
+    public static final Zone BASE_ZONE = new Zone(0, 0, 0, 0, 0);
+    private DroneStateMachine stateMachine = new DroneStateMachine(this);
 
     /**
      * Constructs a DroneSubsystem with a reference to the Scheduler.
@@ -37,7 +38,8 @@ public class DroneSubsystem implements Runnable {
         this.DRONE_PORT = BASE_PORT + droneID;
         this.currentFireEvent = null;
         this.lastFireEvent = null;
-        this.state = "IDLE";
+        this.nextDestination = null;
+        this.currentZone = BASE_ZONE;
 
         try {
             sendSocket      = new DatagramSocket();
@@ -54,22 +56,13 @@ public class DroneSubsystem implements Runnable {
      */
     @Override
     public void run() {
-        while (true) {
-            // Register the drone with the scheduler and fetch any new fires the scheduler assigns to this drone
-            // BLOCK for reply
-            currentFireEvent = fetchFireTask();
-
-            if (currentFireEvent != null) {
-                // Complete any new fire received
-                completeTask(currentFireEvent);
-                // Send ack back to the scheduler and BLOCK waiting for reply
-                returnFireCompleted();
+        // handle events for state machine
+        while(true) {
+            try {
+                stateMachine.handleState();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
             }
-            // No current fire from the scheduler to service
-            else{
-                System.out.println("Waiting for new fire... Actually why am I here?");
-            }
-
         }
     }
 
@@ -105,9 +98,10 @@ public class DroneSubsystem implements Runnable {
      * @return The fire event task assigned to the drone.
      */
     public FireEvent fetchFireTask() {
+        System.out.println(this + " Ready to service any new fires");
+
         if (currentFireEvent == null){
             // Initial Request Packet
-            this.state = "READY";
             String requestData              = this + " READY: Ready to service any new fires";
             byte[] requestBuffer            = requestData.getBytes();
             DatagramPacket requestPacket    = null;
@@ -131,6 +125,8 @@ public class DroneSubsystem implements Runnable {
 
             // Process the request returned from the scheduler and return the fire event
             currentFireEvent = parseDataToFireEvent(data);
+            this.nextDestination = Scheduler.getZone(currentFireEvent.getZoneId());
+
             }
         return currentFireEvent;
     }
@@ -190,7 +186,6 @@ public class DroneSubsystem implements Runnable {
      * indicating that the fire has been extinguished, along with details of the last fire event.
      */
     public void returnFireCompleted(){
-        this.state = "COMPLETE";
         String ack = this + " COMPLETED: Fire has been extinguished " + lastFireEvent;
         sendAck(ack);
     }
@@ -200,10 +195,8 @@ public class DroneSubsystem implements Runnable {
      * and simulates the drone's travel back to the base zone.
      */
     public void refillAgent() {
-        setState("REFILLING");
         System.out.println(this + " Refilling agent... ");
         this.agentLevel = MAX_AGENT_CAP;
-        simulateDroneTravel(BASE_ZONE);
     }
 
     /**
@@ -211,7 +204,10 @@ public class DroneSubsystem implements Runnable {
      * @param zone The zone of the fire event
      */
     public void simulateDroneTravel(Zone zone) {
-        setState("EN_ROUTE");
+        if (this.currentZone.equals(zone)){
+            System.out.println(this + " Already at ZONE " + zone.getID());
+            return;
+        }
         // Calculate the center of the target zone
         double centerX = (zone.getStartX() + zone.getEndX()) / 2.0;
         double centerY = (zone.getStartY() + zone.getEndY()) / 2.0;
@@ -235,6 +231,8 @@ public class DroneSubsystem implements Runnable {
             this.droneY = centerY;
 
             System.out.println(this + " arrived at destination.");
+            this.currentZone = zone;
+
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             System.err.println(this + " Travel interrupted!");
@@ -250,61 +248,43 @@ public class DroneSubsystem implements Runnable {
         return agentLevel == 0;
     }
 
-    /**
-     * Completes a fire event task by dropping the extinguishing agent.
-     * If the fire is not fully extinguished, the drone may need to refill and return.
-     *
-     * @param task The fire event task being handled.
-     */
-    public void completeTask(FireEvent task) {
-        System.out.println(this + " Extinguishing Starting for:  " + task + ". " + task.getRemainingWaterNeeded() + "L remaining to extinguish.");
 
-        while (task.getRemainingWaterNeeded() > 0) {
-            if (agentLevel > 0) {
-                setState("EN_ROUTE");
-                simulateDroneTravel(Scheduler.getZone(task.getZoneId()));
-                setState("DROPPING");
-                int waterToDrop = Math.min(agentLevel, task.getRemainingWaterNeeded());
-                System.out.println(this + " Dropping: " + waterToDrop + "L of agent.");
-                agentLevel -= waterToDrop;
-                task.extinguish(waterToDrop);
-                System.out.println(this + " Dropped: " + waterToDrop + "L of agent. " + agentLevel + "L left.");
-            }
-
-            if (task.getRemainingWaterNeeded() <= 0) {
-                fireEventComplete = true;
-                setState("EN_ROUTE");
-                simulateDroneTravel(BASE_ZONE);
-                setState("IDLE");
-                //Break as task has been completed
-                break;
-            }
-
-            if (isAgentEmpty()) {
-                System.out.println(this + " Not enough agent to complete the task. Going to refill...");
-                refillAgent();
-            }
-        }
-
-        if (fireEventComplete) {
-            setState("IDLE");
-            System.out.println(this + " Fire has been fully extinguished: " + task);
-            setState("EN_ROUTE");
-            System.out.println(this + " Returning to base");
-            simulateDroneTravel(BASE_ZONE);
-            setState("IDLE");
-            lastFireEvent = currentFireEvent;
-            currentFireEvent = null;
-        }
+    public Zone getNextDestination(){
+        return this.nextDestination;
     }
 
-    public void setState(String state){
-        this.state = state;
+    private void setNextDestination(Zone zone){
+        this.nextDestination = zone;
+    }
+
+    public Zone getCurrentZone(){
+        return this.currentZone;
+    }
+
+    public int getAgentLevel(){
+        return this.agentLevel;
+    }
+
+    public FireEvent getCurrentFireEvent(){
+        return this.currentFireEvent;
+    }
+
+    public void dropAgent(int amount){
+        this.agentLevel = this.agentLevel - amount;
+    }
+
+    public boolean currentFireExtinguished(){
+        if(currentFireEvent.getRemainingWaterNeeded() <= 0){
+            lastFireEvent       = currentFireEvent;
+            currentFireEvent    = null;
+            return true;
+        };
+        return false;
     }
 
     @Override
     public String toString() {
-        return "[DRONE: " + this.droneID + "]" + "[PORT: " + this.DRONE_PORT + "]" + "[STATE: " + this.state + "]";
+        return "[DRONE: " + this.droneID + "]" + "[PORT: " + this.DRONE_PORT + "]" + "[STATE: " + this.stateMachine.getState().toUpperCase() + "]";
     }
 
 }

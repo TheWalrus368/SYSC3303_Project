@@ -47,4 +47,15 @@ class Zone {
      * @return double The ending Y-coordinate.
      */
     public double getEndY() { return endY; }
+
+    @Override
+    public boolean equals(Object zone){
+        if (!(zone instanceof Zone)) {
+            return false;
+        }
+        else {
+            Zone z = (Zone) zone;
+            return z.getStartX() == this.startX && z.getStartY() == this.startY && z.getEndX() == this.endX && z.getEndY() == this.endY;
+        }
+    }
 }

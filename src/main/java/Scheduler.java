@@ -81,7 +81,7 @@ class Scheduler implements Runnable{
 
             switch(eventStatus.getCommand()) {
                 // NEW DRONE READY TO EXTINGUISH ANY AVAILABLE FIRE
-                case "READY":
+                case "IDLE":
                     this.state = "DISPATCH_DRONE";
 
                     // Step 3 (READY): Check for any unassigned fires. If there is a fire reply with fire
@@ -115,7 +115,7 @@ class Scheduler implements Runnable{
                     droneToFireBuffer.addLast(fireID);
 
                     // Update the drone's state to READY again
-                    updateDroneState(eventStatus.getDroneStatus().getDroneID(), "READY");
+                    updateDroneState(eventStatus.getDroneStatus().getDroneID(), "IDLE");
 
                     // Step 4 (COMPLETE): Send ACK
                     String ack = "FIRE EXTINGUISHED: FireID=" + fireID;
@@ -213,7 +213,7 @@ class Scheduler implements Runnable{
             }
 
             // Create and return a new event to handle a ready drone
-            return new EventStatus("READY");
+            return new EventStatus("IDLE");
         } else {
             if (data.contains("NEW FIRE")){
                 return new EventStatus("FIRE");
@@ -246,7 +246,7 @@ class Scheduler implements Runnable{
      */
     public synchronized DroneStatus getAvailableDrone(){
         for (DroneStatus drone: drones){
-            if (drone.getState().equals("READY")){
+            if (drone.getState().equals("IDLE")){
                 drone.setState("USED");
                 return drone;
             }

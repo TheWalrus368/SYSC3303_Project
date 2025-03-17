@@ -20,7 +20,20 @@ class Idle implements DroneState {
     @Override
     public void handle(DroneStateMachine context) {
         DroneSubsystem drone = context.getDrone();
-
+        if (drone.isAgentEmpty()){
+            context.setState("REFILLING");
+        }
+        else if (drone.getCurrentFireEvent() != null){
+            context.setState("EN_ROUTE");
+        }
+        else {
+            FireEvent fireEvent = context.getDrone().fetchFireTask();
+            if (fireEvent != null) {
+                System.out.println(drone + " Extinguishing Starting for:  " + drone.getCurrentFireEvent() + ". " +
+                        drone.getCurrentFireEvent().getRemainingWaterNeeded() + "L remaining to extinguish.");
+                context.setState("EN_ROUTE");
+            }
+        }
     }
 }
 /**
@@ -30,6 +43,8 @@ class EnRoute implements DroneState {
     @Override
     public void handle(DroneStateMachine context) {
         DroneSubsystem drone = context.getDrone();
+        drone.simulateDroneTravel(drone.getNextDestination());
+        context.setState("DROPPING_AGENT");
     }
 }
 
@@ -40,6 +55,19 @@ class DroppingAgent implements DroneState {
     @Override
     public void handle(DroneStateMachine context){
         DroneSubsystem drone = context.getDrone();
+        int waterToDrop = Math.min(drone.getAgentLevel(), drone.getCurrentFireEvent().getRemainingWaterNeeded());
+        System.out.println(drone + " Dropping: " + waterToDrop + "L of agent.");
+        drone.dropAgent(waterToDrop);
+        drone.getCurrentFireEvent().extinguish(waterToDrop);
+        System.out.println(drone + " Dropped: " + waterToDrop + "L of agent. " + drone.getAgentLevel() + "L left.");
+
+        if (drone.currentFireExtinguished()) {
+            context.setState("COMPLETE");
+        }
+        else if (drone.isAgentEmpty()) {
+            System.out.println(drone + " Not enough agent to complete the task. Going to refill...");
+            context.setState("REFILLING");
+        }
     }
 }
 
@@ -50,6 +78,26 @@ class Refilling implements DroneState {
     @Override
     public void handle(DroneStateMachine context){
         DroneSubsystem drone = context.getDrone();
+        drone.simulateDroneTravel(DroneSubsystem.BASE_ZONE);
+        drone.refillAgent();
+
+        if (drone.getCurrentFireEvent() != null){
+            context.setState("EN_ROUTE");
+        }
+        else{
+            context.setState("IDLE");
+        }
+    }
+}
+
+/**
+ * State representing a drone that has completed extinguishing a fire
+ */
+class Complete implements DroneState{
+    @Override
+    public void handle(DroneStateMachine context){
+        context.getDrone().returnFireCompleted();
+        context.setState("IDLE");
     }
 }
 
@@ -83,6 +131,7 @@ public class DroneStateMachine {
         states.put("DROPPING_AGENT", new DroppingAgent());
         states.put("REFILLING", new Refilling());
         states.put("FAULTED", new Faulted());
+        states.put("COMPLETE", new Complete());
 
         currentState = states.get("IDLE");
     }
@@ -106,7 +155,7 @@ public class DroneStateMachine {
         this.currentState = states.get(stateName);
     }
 
-    public String getState(String stateName){
+    public String getState(){
         return currentState.getClass().getSimpleName();
     }
 
