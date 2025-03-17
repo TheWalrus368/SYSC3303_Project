@@ -15,7 +15,7 @@ public class TestScheduler extends Scheduler {
         super("src/main/java/sample_zone.csv");
     }
 
-    @Override
+
     public synchronized void receiveFireEvent(FireEvent event) {
         while (taskReady) {
             try {
@@ -44,7 +44,7 @@ public class TestScheduler extends Scheduler {
         notifyAll();
     }
 
-    @Override
+
     public synchronized FireEvent assignTaskToDrone() {
         while (!taskReady) {
             try {

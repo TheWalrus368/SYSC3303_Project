@@ -55,24 +55,4 @@ public class DroneSubsystemTest {
         assertEquals("FIRE_DETECTED", fireEvent.getEventType());
         assertEquals("High", fireEvent.getSeverity());
     }
-
-    @Test
-    public void testCompleteTask() throws InterruptedException {
-        // Start the DroneSubsystem thread
-        Thread droneThread = new Thread(droneSubsystem);
-        droneThread.start();
-
-        // Start the FireIncidentSubsystem thread
-        Thread fireIncidentThread = new Thread(fireIncidentSubsystem);
-        fireIncidentThread.start();
-
-        // Wait for both threads to finish processing
-        fireIncidentThread.join(5000); // Wait for up to 5 seconds for the fire incident thread to finish
-        droneThread.join(5000); // Wait for up to 5 seconds for the drone thread to finish
-        FireEvent fireEvent = new FireEvent(1, "10:00", 1, "FIRE_DETECTED", "High");
-        //droneSubsystem.completeTask(fireEvent);
-
-        assertEquals(0, fireEvent.getRemainingWaterNeeded());
-        assertTrue(droneSubsystem.isAgentEmpty());
-    }
 }

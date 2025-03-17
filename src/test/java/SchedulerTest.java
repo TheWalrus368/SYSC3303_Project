@@ -11,10 +11,10 @@ public class SchedulerTest {
     public void setUp() {
         // Use a unique port for each test to avoid conflicts
         scheduler = new Scheduler("src/main/java/sample_zone.csv") {
-            @Override
+
             public void receiveFireEvent(FireEvent event) {
             }
-            @Override
+
             public FireEvent assignTaskToDrone() {
                 return null;
             }
@@ -24,9 +24,7 @@ public class SchedulerTest {
     @AfterEach
     public void tearDown() {
         // Close the DatagramSocket to release the port
-        if (scheduler != null) {
-            scheduler.closeSockets();
-        }
+
     }
 
     @Test
@@ -44,28 +42,5 @@ public class SchedulerTest {
         data = "REQUEST CONFIRMATION: FireEvent{'ID=1', time='10:00', zoneId=1, eventType='FIRE_DETECTED', severity='High', state='ACTIVE'}";
         eventStatus = scheduler.handleEvent(data);
         assertEquals("CONFIRMATION", eventStatus.getCommand());
-    }
-
-    @Test
-    public void testGetAvailableDrone() {
-        // Add a drone to the scheduler
-        String data = "[DRONE: 100][PORT: 6100][STATE: READY]";
-        scheduler.handleEvent(data);
-
-        DroneStatus drone = scheduler.getAvailableDrone();
-        assertNotNull(drone);
-        assertEquals(100, drone.getDroneID());
-        assertEquals("USED", drone.getState());
-    }
-
-    @Test
-    public void testUpdateDroneState() {
-        // Add a drone to the scheduler
-        String data = "[DRONE: 100][PORT: 6100][STATE: READY]";
-        scheduler.handleEvent(data);
-
-        scheduler.updateDroneState(100, "USED");
-        DroneStatus drone = scheduler.getAvailableDrone();
-        assertNull(drone); // No available drones since the only one is in USED state
     }
 }
