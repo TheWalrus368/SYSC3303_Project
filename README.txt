@@ -53,22 +53,6 @@ The Class Diagram represents the structure of the system, showing relationships 
 
 											 3) TestScheduler, which extends Scheduler for unit testing.
 
-
-State Machine Diagram
-
-The State Machine Diagram details the lifecycle of a Drone: 1) Idle → Waiting for tasks.
-
-                                                            2) Responding → Traveling to the fire location.
-
-                                                            3) Extinguishing → Fighting the fire.
-                                                            
-                                                            4) Refilling → If drone is empty and/or more extinguishing agent is needed.
-
-                                                            4) Returning → Moving back to the base after task completion.
-       
-                                                            5) Idle → Ready for the next fire event.
-
-
 Unit Tests
 -----------
 
