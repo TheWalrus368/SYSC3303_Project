@@ -13,17 +13,9 @@ public class SchedulerTest {
     public void setUp() {
         // Use a unique port for each test to avoid conflicts
         scheduler = new Scheduler("src/main/java/sample_zone.csv") {
-            /**
-             * @param event
-             */
             @Override
             public void receiveFireEvent(FireEvent event) {
-
             }
-
-            /**
-             * @return
-             */
             @Override
             public FireEvent assignTaskToDrone() {
                 return null;
