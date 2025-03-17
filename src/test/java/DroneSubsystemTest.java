@@ -2,48 +2,35 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * @author Tony Situ
- * @version 30/01/2025
- * The {@code DroneSubsystemTest} class contains unit tests for the {@code DroneSubsystem}.
- * It verifies the correct execution of the drone's behavior when processing fire events.
- */
 public class DroneSubsystemTest {
 
-    private TestScheduler testScheduler;
     private DroneSubsystem droneSubsystem;
 
-    /**
-     * Sets up the test environment before each test case.
-     * Initializes a {@code TestScheduler} and a {@code DroneSubsystem} instance.
-     */
     @BeforeEach
     public void setUp() {
-        testScheduler = new TestScheduler();
-        droneSubsystem = new DroneSubsystem(testScheduler, 100);
+        droneSubsystem = new DroneSubsystem(100);
     }
 
-    /**
-     * Tests the {@code run} method of {@code DroneSubsystem}.
-     * It ensures that the drone correctly fetches a fire event from the scheduler
-     * and processes it as expected.
-     *
-     * @throws InterruptedException If the thread execution is interrupted.
-     */
     @Test
-    public void testRunMethod() throws InterruptedException {
-        // Preload a task into the scheduler
-        FireEvent mockEvent = new FireEvent("10:00", 1, "FIRE_DETECTED", "High");
-        testScheduler.receiveFireEvent(mockEvent);
+    public void testFetchFireTask() {
+        // Simulate a fire event being sent to the drone
+        String fireData = "NEW FIRE: FireEvent{'ID=1', time='10:00', zoneId=1, eventType='FIRE_DETECTED', severity='High', state='ACTIVE'}";
+        FireEvent fireEvent = droneSubsystem.parseDataToFireEvent(fireData);
 
-        // Start the thread
-        Thread thread = new Thread(droneSubsystem);
-        thread.start();
+        assertNotNull(fireEvent);
+        assertEquals(1, fireEvent.getFireID());
+        assertEquals("10:00", fireEvent.getTime());
+        assertEquals(1, fireEvent.getZoneId());
+        assertEquals("FIRE_DETECTED", fireEvent.getEventType());
+        assertEquals("High", fireEvent.getSeverity());
+    }
 
-        // Wait for some time to let the thread process
-        thread.join(1000);
+    @Test
+    public void testCompleteTask() {
+        FireEvent fireEvent = new FireEvent(1, "10:00", 1, "FIRE_DETECTED", "High");
+        droneSubsystem.completeTask(fireEvent);
 
-        // Verify interactions with the test scheduler
-        assertEquals(mockEvent, testScheduler.receivedTaskDrone);
+        assertEquals(0, fireEvent.getRemainingWaterNeeded());
+        assertTrue(droneSubsystem.isAgentEmpty());
     }
 }

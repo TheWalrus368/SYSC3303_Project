@@ -1,20 +1,12 @@
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
+import static org.junit.jupiter.api.Assertions.*;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-/**
- * The {@code FireIncidentSubsystemTest} class contains unit tests for the {@code FireIncidentSubsystem}.
- * It ensures that fire events are correctly parsed from a CSV file, sent to the scheduler,
- * and appropriately processed by the drone subsystem.
- */
 public class FireIncidentSubsystemTest {
 
     private TestScheduler testScheduler;
@@ -22,12 +14,6 @@ public class FireIncidentSubsystemTest {
     private DroneSubsystem droneSubsystem;
     private File tempFile;
 
-    /**
-     * Sets up the test environment before each test case.
-     * Creates a temporary CSV file containing test fire events and initializes the necessary subsystems.
-     *
-     * @throws IOException If an error occurs while creating the temporary file.
-     */
     @BeforeEach
     public void setUp() throws IOException {
         testScheduler = new TestScheduler();
@@ -39,14 +25,10 @@ public class FireIncidentSubsystemTest {
             writer.write("10:05,2,FIRE_DETECTED,Moderate\n");
         }
 
-        fireIncidentSubsystem = new FireIncidentSubsystem(tempFile.getAbsolutePath(), testScheduler);
-        droneSubsystem = new DroneSubsystem(testScheduler, 100);
+        fireIncidentSubsystem = new FireIncidentSubsystem(tempFile.getAbsolutePath());
+        droneSubsystem = new DroneSubsystem(100); // Initialize drone subsystem
     }
 
-    /**
-     * Cleans up the test environment after each test.
-     * Deletes the temporary CSV file to prevent clutter.
-     */
     @AfterEach
     public void tearDown() {
         // Delete the temporary file after each test
@@ -55,13 +37,6 @@ public class FireIncidentSubsystemTest {
         }
     }
 
-    /**
-     * Tests the {@code run} method of the {@code FireIncidentSubsystem}.
-     * It ensures that fire events are read from the CSV file, sent to the scheduler,
-     * and processed correctly by the drone subsystem.
-     *
-     * @throws InterruptedException If thread execution is interrupted during the test.
-     */
     @Test
     public void testRunMethod() throws InterruptedException {
         // Start the DroneSubsystem thread
@@ -72,19 +47,23 @@ public class FireIncidentSubsystemTest {
         Thread fireIncidentThread = new Thread(fireIncidentSubsystem);
         fireIncidentThread.start();
 
-        // Wait for both threads to finish processing (up to 10 seconds)
-        Thread.sleep(25000);
+        // Wait for both threads to finish processing
+        fireIncidentThread.join(5000); // Wait for up to 5 seconds for the fire incident thread to finish
+        droneThread.join(5000); // Wait for up to 5 seconds for the drone thread to finish
 
         // Verify interactions with the test scheduler
         List<FireEvent> eventsSent = testScheduler.getEventsSent();
         List<FireEvent> responsesReceived = testScheduler.getResponsesReceived();
 
         // Verify the number of events sent and responses received
-        assertEquals(2, eventsSent.size());
-        assertEquals(0, responsesReceived.size());
+        assertEquals(2, eventsSent.size(), "Expected 2 fire events to be sent to the scheduler");
+        assertEquals(0, responsesReceived.size(), "Expected 0 responses from the drone subsystem");
 
         // Verify specific events sent to the scheduler
-        FireEvent event1 = new FireEvent("10:00", 1, "FIRE_DETECTED", "High");
-        FireEvent event2 = new FireEvent("10:05", 2, "FIRE_DETECTED", "Moderate");
+        FireEvent event1 = new FireEvent(1, "10:00", 1, "FIRE_DETECTED", "High");
+        FireEvent event2 = new FireEvent(2, "10:05", 2, "FIRE_DETECTED", "Moderate");
+
+        assertTrue(eventsSent.contains(event1), "Expected event1 to be sent to the scheduler");
+        assertTrue(eventsSent.contains(event2), "Expected event2 to be sent to the scheduler");
     }
 }
