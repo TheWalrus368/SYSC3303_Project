@@ -18,6 +18,7 @@ class Scheduler implements Runnable{
     private BoundedBuffer fireToDroneBuffer, droneToFireBuffer;
     private final LinkedList<DroneStatus> drones = new LinkedList<>();  // Changed to LinkedList
     private Thread receiveThread;
+    private String state;
 
     /**
      * Creates a new host by:
@@ -32,6 +33,7 @@ class Scheduler implements Runnable{
             sendSocket              = new DatagramSocket(); // For sending all packets
             fireToDroneBuffer       = new BoundedBuffer(); // Holds all unprocessed fire reports
             droneToFireBuffer       = new BoundedBuffer(); // Holds all responses from drones
+            this.state              = "WAITING_TO_RECEIVE";
             loadZonesFromCSV(zoneCSV);
 
         } catch (SocketException e) {
@@ -80,6 +82,8 @@ class Scheduler implements Runnable{
             switch(eventStatus.getCommand()) {
                 // NEW DRONE READY TO EXTINGUISH ANY AVAILABLE FIRE
                 case "READY":
+                    this.state = "DISPATCH_DRONE";
+
                     // Step 3 (READY): Check for any unassigned fires. If there is a fire reply with fire
                     String fireRequest = fireToDroneBuffer.removeFirst().toString();
                     byte[] fireRequestBuffer = fireRequest.getBytes();
@@ -96,7 +100,7 @@ class Scheduler implements Runnable{
                                                                     InetAddress.getLocalHost(),
                                                                     selectedDrone.getPort());
 
-                    System.out.println("[Scheduler -> Drone] Reply for DRONE request with:" + fireRequest);
+                    System.out.println(this + " [Scheduler -> Drone] Reply for DRONE request with:" + fireRequest);
                     sendSocket.send(assignDroneFirePacket);
 
                     // Update the drones status to being used
@@ -105,6 +109,7 @@ class Scheduler implements Runnable{
 
                 // DRONE INDICATING IT HAS COMPLETED EXTINGUISHING FIRE
                 case "COMPLETE":
+                    this.state = "NOTIFY_FIRE_EXTINGUISHED";
                     // Step 3 (COMPLETE): Add to droneToFireBuffer
                     fireID = Integer.parseInt(requestData.replaceAll(".*ID=(\\d+).*", "$1"));
                     droneToFireBuffer.addLast(fireID);
@@ -120,11 +125,12 @@ class Scheduler implements Runnable{
                             droneReply.length,
                             InetAddress.getLocalHost(),
                             port);
-                    System.out.println("[Scheduler -> Drone] reply from COMPLETE request: " + ack);
+                    System.out.println(this + " [Scheduler -> Drone] reply from COMPLETE request: " + ack);
                     sendSocket.send(droneFireCompletePacket);
                     break;
 
                 case "FIRE":
+                    this.state = "NEW_FIRE";
                     // Step 3 (FireEvent): Add fire to buffer
                     fireToDroneBuffer.addLast(requestData);
 
@@ -135,11 +141,12 @@ class Scheduler implements Runnable{
                             acknowledgmentBuffer.length,
                             InetAddress.getLocalHost(),
                             requestPacket.getPort());
-                    System.out.println("[Scheduler -> FireIncidentSubsystem] Sent acknowledgement: " + acknowledgment + " to " + InetAddress.getLocalHost() + ":" + requestPacket.getPort());
+                    System.out.println(this + " [Scheduler -> FireIncidentSubsystem] Sent acknowledgement: " + acknowledgment + " to " + InetAddress.getLocalHost() + ":" + requestPacket.getPort());
                     sendSocket.send(acknowledgementPacket);
                     break;
 
                 case "CONFIRMATION":
+                    this.state = "CONFIRM_FIRE_EXTINGUISHED";
                     // Fire Incident Subsystem waiting for confirmation fire is out.
                     String pattern = "FireEvent\\{'ID=(\\d+)'";
                     Pattern regex = Pattern.compile(pattern);
@@ -158,13 +165,14 @@ class Scheduler implements Runnable{
                             confirmReply.length,
                             InetAddress.getLocalHost(),
                             requestPacket.getPort());
-                    System.out.println("[Scheduler -> FireIncidentSubsystem] Fire: " + fireID + " is out: " + confirmation);
+                    System.out.println(this + " [Scheduler -> FireIncidentSubsystem] Fire: " + fireID + " is out: " + confirmation);
                     sendSocket.send(droneAcknowledgementPacket);
 
                     break;
 
                 case "ERROR":
-                    System.out.println("SOMETHING WENT WRONG!!!");
+                    this.state = "ERROR";
+                    System.out.println(this + " SOMETHING WENT WRONG!!!");
                     break;
             }
         } catch(IOException e){
@@ -288,6 +296,12 @@ class Scheduler implements Runnable{
             System.err.println("Error reading CSV file: " + e.getMessage());
         }
     }
+
+    @Override
+    public String toString(){
+        return "[SCHEDULER][STATE: " + this.state + "]";
+    }
+
 
     /**
      * @param zoneId The ID of the zone to retrieve.
