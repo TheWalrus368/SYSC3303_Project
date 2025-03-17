@@ -42,6 +42,13 @@ Components
 
 - Transitions between states occur based on fire event assignments and completion status.
 
+5. SchedulerStateMachine
+
+- Implements the behavior for the scheduler.
+
+- Scheduler has various states such as DISPATCH_DRONE, NOTIFY_FIRE_EXTINGUISHED, NEW_FIRE, etc
+
+- Transitions between states are based on requests from the DroneSubsystems and FireIncidentSubsystems
 
 UML Diagrams
 ------------
