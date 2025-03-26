@@ -13,7 +13,7 @@ public class DroneSubsystem implements Runnable {
     private FireEvent currentFireEvent;
     public FireEvent lastFireEvent;
     private static final int MAX_AGENT_CAP = 15; // Max payload is 15kg
-    private static final int SPEED = 100;
+    private static final int SPEED = 200;
     private DatagramSocket sendSocket, receiveSocket;
     private static final int BASE_PORT = 6000;
     private static final int SCHEDULER_PORT = 7000;
@@ -137,8 +137,8 @@ public class DroneSubsystem implements Runnable {
      * @return the fire event that was created from the extracted data
      */
     public FireEvent parseDataToFireEvent(String data) {
-        // Updated regex pattern to correctly extract values
-        String pattern = "NEW FIRE: FireEvent\\{'ID=(\\d+)', time='([^']+)', zoneId=(\\d+), eventType='([^']+)', severity='([^']+)', state='[^']+'\\}";
+        // Updated regex pattern to correctly extract values, including failure
+        String pattern = "NEW FIRE: FireEvent\\{'ID=(\\d+)', time='([^']+)', zoneId=(\\d+), eventType='([^']+)', severity='([^']+)', state='[^']+', failure='([^']+)'\\}";
         Pattern regex = Pattern.compile(pattern);
         Matcher matcher = regex.matcher(data);
 
@@ -148,10 +148,12 @@ public class DroneSubsystem implements Runnable {
             int zoneId = Integer.parseInt(matcher.group(3));
             String eventType = matcher.group(4);
             String severity = matcher.group(5);
-            return new FireEvent(fireID, time, zoneId, eventType, severity);
+            String failure = matcher.group(6);
+            return new FireEvent(fireID, time, zoneId, eventType, severity, failure);
         }
         return null; // No match found
     }
+
 
     /**
      * Sends an acknowledgment to the Scheduler and waits for a response.
@@ -188,6 +190,14 @@ public class DroneSubsystem implements Runnable {
     public void returnFireCompleted(){
         String ack = this + " COMPLETED: Fire has been extinguished " + lastFireEvent;
         sendAck(ack);
+    }
+
+    /**
+     *  Sends a failure message back to the scheduler
+     */
+    public void returnFailure(){
+        String fail = this + " FAIL: This Fire has failed with " + currentFireEvent;
+        sendAck(fail);
     }
 
     /**

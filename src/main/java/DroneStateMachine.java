@@ -54,6 +54,13 @@ class EnRoute implements DroneState {
 class DroppingAgent implements DroneState {
     @Override
     public void handle(DroneStateMachine context){
+        if (context.getDrone().getCurrentFireEvent().getFailureFlag()){
+            System.out.println("Failed: " + context.getDrone().toString());
+            context.setState("FAULTED");
+            context.getDrone().returnFailure();
+            return;
+        }
+
         DroneSubsystem drone = context.getDrone();
         int waterToDrop = Math.min(drone.getAgentLevel(), drone.getCurrentFireEvent().getRemainingWaterNeeded());
         System.out.println(drone + " Dropping: " + waterToDrop + "L of agent.");

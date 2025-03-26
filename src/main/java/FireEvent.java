@@ -1,3 +1,5 @@
+import java.util.Objects;
+
 /**
  * Represents a fire event occurring in a specific zone.
  * This event includes details such as the time of occurrence,
@@ -10,6 +12,7 @@ public class FireEvent {
     private final String severity;   // Severity level (High, Moderate, Low)
     private int remainingWaterNeeded;
     private final int fireID;
+    private String failure;    // incidates if there will be a failure drone. 
     private String state;
     private int port;
 
@@ -21,8 +24,10 @@ public class FireEvent {
      * @param zoneId   The ID of the zone where the fire occurred.
      * @param eventType The type of event (e.g., FIRE_DETECTED, DRONE_REQUEST).
      * @param severity  The severity of the fire (High, Moderate, Low).
+     * @param failure   The failure marker of the fire
      */
-    public FireEvent(int fireID, String time, int zoneId, String eventType, String severity) {
+    public FireEvent(int fireID, String time, int zoneId, String eventType, String severity, String failure) {
+        this.failure = failure;
         this.fireID = fireID;
         this.time = time;
         this.zoneId = zoneId;
@@ -102,6 +107,16 @@ public class FireEvent {
      */
     public String getState(){ return state; }
 
+
+    /**
+     *  Returns if the fire has a failure status
+     *
+     * @return Bool of the failure status
+     */
+    public boolean getFailureFlag(){
+        return Objects.equals(failure, "FAIL");
+    }
+
     /**
      * Determines the water required based on fire severity.
      *
@@ -137,6 +152,7 @@ public class FireEvent {
                 ", eventType='" + eventType + '\'' +
                 ", severity='" + severity + '\'' +
                 ", state='" + state + '\'' +
+                ", failure='"+ failure + '\'' +
                 '}';
     }
 }

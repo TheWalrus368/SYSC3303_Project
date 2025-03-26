@@ -72,9 +72,10 @@ public class FireIncidentSubsystem implements Runnable {
         int zoneId = Integer.parseInt(parts[1]);
         String eventType = parts[2];
         String severity = parts[3];
+        String failure = parts[4];
 
         // Create the new fire event
-        FireEvent newFire =  new FireEvent(nextFireID, time, zoneId, eventType, severity);
+        FireEvent newFire = new FireEvent(nextFireID, time, zoneId, eventType, severity, failure);
         nextFireID++;
         return newFire;
     }

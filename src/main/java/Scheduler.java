@@ -169,6 +169,11 @@ class Scheduler implements Runnable{
                     sendSocket.send(droneAcknowledgementPacket);
 
                     break;
+                case "FAIL":
+                    System.out.println("[Scheduler <- Drone] " + requestData);
+                    System.out.println("[Scheduler] Adding fire back to list " + extractFireEvent(requestData));
+                    fireToDroneBuffer.addLast("NEW FIRE: "+extractFireEvent(requestData).replace("FAIL", "NONE"));
+                    break;
 
                 case "ERROR":
                     this.state = "ERROR";
@@ -194,6 +199,9 @@ class Scheduler implements Runnable{
         Matcher matcher = regex.matcher(data);
 
         if (matcher.find()) {
+            if (data.contains("FAIL")){
+                return new EventStatus("FAIL");
+            }
             int droneID = Integer.parseInt(matcher.group(1));
             int port = Integer.parseInt(matcher.group(2));
             String state = matcher.group(3);
@@ -226,6 +234,18 @@ class Scheduler implements Runnable{
             }
         }
     }
+
+    public String extractFireEvent(String data) {
+        String pattern = "(FireEvent\\{'ID=\\d+', time='[^']+', zoneId=\\d+, eventType='[^']+', severity='[^']+', state='[^']+', failure='[^']+'\\})";
+        Pattern regex = Pattern.compile(pattern);
+        Matcher matcher = regex.matcher(data);
+
+        if (matcher.find()) {
+            return matcher.group(1); // Return only the FireEvent part
+        }
+        return "Could not find failed fire"; // No match found
+    }
+
 
     /**
      * Returns the port of the drone
