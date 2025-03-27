@@ -1,2 +1,5 @@
-public class ModifiedScheduler{
+public class ModifiedScheduler extends Scheduler {
+    public ModifiedScheduler() {
+        super();
+    }
 }
