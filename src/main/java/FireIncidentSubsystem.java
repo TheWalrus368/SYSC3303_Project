@@ -119,4 +119,17 @@ public class FireIncidentSubsystem implements Runnable {
 
     public static int getPort(){ return port; }
 
+    public static void main(String[] args) {
+        // CSV file path containing fire event data
+        String csvFilePath = "src/main/java/fire_events.csv";
+
+        // Initialize FireIncidentSubsystem
+        FireIncidentSubsystem fireIncidentSubsystem = new FireIncidentSubsystem(csvFilePath);
+
+        // Start Thread
+        Thread fireIncidentThread = new Thread(fireIncidentSubsystem, "FIRE");
+        fireIncidentThread.start();
+
+    }
+
 }

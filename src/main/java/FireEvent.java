@@ -114,7 +114,7 @@ public class FireEvent {
      * @return Bool of the failure status
      */
     public boolean getFailureFlag(){
-        return Objects.equals(failure, "FAIL");
+        return Objects.equals(failure, "FAULT");
     }
 
     /**

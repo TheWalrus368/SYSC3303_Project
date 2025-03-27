@@ -12,13 +12,14 @@ import java.util.regex.*;
  * communication
  */
 class Scheduler implements Runnable{
-    private static final Map<Integer, Zone> zoneMap = new HashMap<>();
     private static final int RECEIVE_PORT = 7000;
     private DatagramSocket receiveSocket, sendSocket;
     private BoundedBuffer fireToDroneBuffer, droneToFireBuffer;
     private final LinkedList<DroneStatus> drones = new LinkedList<>();  // Changed to LinkedList
     private Thread receiveThread;
     private String state;
+    private static final String zoneFilePath = "src//main/java/sample_zone.csv";
+    private static Map<Integer, Zone> zoneMap = Scheduler.loadZonesFromCSV(zoneFilePath);
 
     /**
      * Creates a new host by:
@@ -27,14 +28,13 @@ class Scheduler implements Runnable{
      * Initialize a bounded buffer to hold unprocessed client commands
      * Initialize a bounded buffer to hold processed commands from server
      */
-    public Scheduler(String zoneCSV) {
+    public Scheduler() {
         try {
             receiveSocket           = new DatagramSocket(RECEIVE_PORT); // Receiving socket for all request
             sendSocket              = new DatagramSocket(); // For sending all packets
             fireToDroneBuffer       = new BoundedBuffer(); // Holds all unprocessed fire reports
             droneToFireBuffer       = new BoundedBuffer(); // Holds all responses from drones
             this.state              = "WAITING_TO_RECEIVE";
-            loadZonesFromCSV(zoneCSV);
 
         } catch (SocketException e) {
             e.printStackTrace();
@@ -44,6 +44,7 @@ class Scheduler implements Runnable{
 
     @Override
     public void run() {
+        System.out.println(this + " Ready to receive new messages");
         while(true) {
             DatagramPacket requestPacket;
             try {
@@ -169,10 +170,11 @@ class Scheduler implements Runnable{
                     sendSocket.send(droneAcknowledgementPacket);
 
                     break;
-                case "FAIL":
+                case "FAULT":
                     System.out.println("[Scheduler <- Drone] " + requestData);
                     System.out.println("[Scheduler] Adding fire back to list " + extractFireEvent(requestData));
-                    fireToDroneBuffer.addLast("NEW FIRE: "+extractFireEvent(requestData).replace("FAIL", "NONE"));
+                    // Reset the fire to no trigger a fault for the next drone
+                    fireToDroneBuffer.addLast("NEW FIRE: "+ extractFireEvent(requestData).replace("FAULT", "NONE"));
                     break;
 
                 case "ERROR":
@@ -199,9 +201,10 @@ class Scheduler implements Runnable{
         Matcher matcher = regex.matcher(data);
 
         if (matcher.find()) {
-            if (data.contains("FAIL")){
-                return new EventStatus("FAIL");
+            if (data.contains("FAULT")){
+                return new EventStatus("FAULT");
             }
+
             int droneID = Integer.parseInt(matcher.group(1));
             int port = Integer.parseInt(matcher.group(2));
             String state = matcher.group(3);
@@ -294,7 +297,9 @@ class Scheduler implements Runnable{
      *
      * @param filePath The path to the CSV file containing zone data.
      */
-    public void loadZonesFromCSV(String filePath) {
+    public static Map<Integer, Zone> loadZonesFromCSV(String filePath) {
+         Map<Integer, Zone> zoneMap = new HashMap<>();
+
         try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
             String line;
             while ((line = br.readLine()) != null) {
@@ -312,9 +317,11 @@ class Scheduler implements Runnable{
                     zoneMap.put(zoneId, new Zone(zoneId, startX, startY, endX, endY));
                 }
             }
+
         } catch (IOException e) {
             System.err.println("Error reading CSV file: " + e.getMessage());
         }
+        return zoneMap;
     }
 
     @Override
@@ -329,5 +336,14 @@ class Scheduler implements Runnable{
      */
     public static Zone getZone(int zoneId) {
         return zoneMap.get(zoneId);
+    }
+
+    public static void main(String[] args) {
+        // Initialize the Scheduler, responsible for managing communication between subsystems
+        Scheduler scheduler = new Scheduler();
+
+        // Start Thread
+        Thread schedulerThread = new Thread(scheduler, "SCHEDULER");
+        schedulerThread.start();
     }
 }

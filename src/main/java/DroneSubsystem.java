@@ -121,11 +121,11 @@ public class DroneSubsystem implements Runnable {
 
             // Handle the client request and send ack back to Scheduler
             String data = new String(dataPacket.getData(), 0, dataPacket.getLength());
-            System.out.println(this + " Received: " + data + " from Scheduler(" + dataPacket.getAddress() + ":" + dataPacket.getPort());
+            System.out.println(this + " Received: " + data + " from Scheduler(" + dataPacket.getAddress() + ":" + dataPacket.getPort() + ")");
 
             // Process the request returned from the scheduler and return the fire event
-            currentFireEvent = parseDataToFireEvent(data);
-            this.nextDestination = Scheduler.getZone(currentFireEvent.getZoneId());
+            currentFireEvent        = parseDataToFireEvent(data);
+            this.nextDestination    = Scheduler.getZone(currentFireEvent.getZoneId());
 
             }
         return currentFireEvent;
@@ -196,7 +196,7 @@ public class DroneSubsystem implements Runnable {
      *  Sends a failure message back to the scheduler
      */
     public void returnFailure(){
-        String fail = this + " FAIL: This Fire has failed with " + currentFireEvent;
+        String fail = this + " FAULT: This Fire has failed with " + currentFireEvent;
         sendAck(fail);
     }
 
@@ -263,9 +263,6 @@ public class DroneSubsystem implements Runnable {
         return this.nextDestination;
     }
 
-    private void setNextDestination(Zone zone){
-        this.nextDestination = zone;
-    }
 
     public Zone getCurrentZone(){
         return this.currentZone;
@@ -295,6 +292,23 @@ public class DroneSubsystem implements Runnable {
     @Override
     public String toString() {
         return "[DRONE: " + this.droneID + "]" + "[PORT: " + this.DRONE_PORT + "]" + "[STATE: " + this.stateMachine.getState().toUpperCase() + "]";
+    }
+
+    public static void main(String[] args) {
+        // Initialize DroneSubsystems
+        DroneSubsystem droneSubsystem = new DroneSubsystem(100);
+        DroneSubsystem droneSubsystem2 = new DroneSubsystem(200);
+        DroneSubsystem droneSubsystem3 = new DroneSubsystem(300);
+
+        // Start threads
+        Thread droneThread = new Thread(droneSubsystem, "DRONE 1");
+        Thread droneThread2 = new Thread(droneSubsystem2, "DRONE 2");
+        Thread droneThread3 = new Thread(droneSubsystem3, "DRONE 3");
+
+        // Begin execution of subsystems
+        droneThread.start();
+        droneThread2.start();
+        droneThread3.start();
     }
 
 }
