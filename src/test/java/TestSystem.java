@@ -15,7 +15,7 @@ public class TestSystem {
     private ModifiedFireIncidentSubsystem fireIncident;
 
     @BeforeAll
-    static void setUpBeforeClass() throws Exception {
+    static void setup() throws Exception {
 
 
         // Init Fire Subsystem
