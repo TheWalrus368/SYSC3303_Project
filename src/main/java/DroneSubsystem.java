@@ -113,7 +113,7 @@ public class DroneSubsystem implements Runnable {
             }
 
             // Response packet with any new fire from the Scheduler
-            byte[] receiveBuffer           = new byte[200];
+            byte[] receiveBuffer           = new byte[1000];
             DatagramPacket receivePacket   = new DatagramPacket(receiveBuffer, receiveBuffer.length);
 
             // Send packet and BLOCK on reception for data (new fire event)
@@ -177,7 +177,7 @@ public class DroneSubsystem implements Runnable {
 
             // Handle the client request and send ack back to Scheduler
             String data = new String(dataPacket.getData(), 0, dataPacket.getLength());
-            System.out.println(this + " Received: " + data + " from Scheduler(" + dataPacket.getAddress() + ":" + dataPacket.getPort());
+            System.out.println(this + " Received: " + data + " from Scheduler(" + dataPacket.getAddress() + ":" + dataPacket.getPort() + ")");
         } catch (UnknownHostException e) {
             throw new RuntimeException(e);
         }
@@ -299,16 +299,19 @@ public class DroneSubsystem implements Runnable {
         DroneSubsystem droneSubsystem = new DroneSubsystem(100);
         DroneSubsystem droneSubsystem2 = new DroneSubsystem(200);
         DroneSubsystem droneSubsystem3 = new DroneSubsystem(300);
+        DroneSubsystem droneSubsystem4 = new DroneSubsystem(400);
 
         // Start threads
         Thread droneThread = new Thread(droneSubsystem, "DRONE 1");
         Thread droneThread2 = new Thread(droneSubsystem2, "DRONE 2");
         Thread droneThread3 = new Thread(droneSubsystem3, "DRONE 3");
+        Thread droneThread4 = new Thread(droneSubsystem4, "DRONE 4");
 
         // Begin execution of subsystems
         droneThread.start();
         droneThread2.start();
         droneThread3.start();
+        droneThread4.start();
     }
 
 }

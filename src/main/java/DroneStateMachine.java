@@ -57,8 +57,6 @@ class DroppingAgent implements DroneState {
         if (context.getDrone().getCurrentFireEvent().getFailureFlag()){
             System.out.println("FAULTED: " + context.getDrone().toString());
             context.setState("FAULTED");
-            context.getDrone().returnFailure();
-            return;
         }
 
         DroneSubsystem drone = context.getDrone();
@@ -114,6 +112,7 @@ class Complete implements DroneState{
 class Faulted implements DroneState {
     @Override
     public void handle(DroneStateMachine context){
+        context.getDrone().returnFailure();
     }
 }
 
