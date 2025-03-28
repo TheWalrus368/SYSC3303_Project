@@ -1,6 +1,8 @@
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -11,11 +13,7 @@ public class TestSystem {
     private static ModifiedScheduler modScheduler;
     private static ModifiedFireIncidentSubsystem fireIncident;
     private static Zone zoneA;
-
-    private static Thread droneThread;
-    private static Thread schedulerThread;
-    private static Thread fireIncidentThread;
-
+    private static List<DroneStatus> drones;
 
     @BeforeAll
     static void setup() throws Exception {
@@ -23,27 +21,25 @@ public class TestSystem {
         // Init Fire Subsystem
         String csvFilePath = "src/main/java/fire_events.csv";
         fireIncident = new ModifiedFireIncidentSubsystem(csvFilePath);
-        fireIncidentThread = new Thread(fireIncident, "FIRE");
 
         // Init DroneSubsystem
         drone = new ModifiedDroneSubsystem(100);
-        droneThread = new Thread(drone);
 
         // Init Scheduler
         modScheduler = new ModifiedScheduler();
-        schedulerThread = new Thread(modScheduler);
 
         zoneA = new Zone(1,0,0,10,10);
-        //drone.currentZone = zoneA;
+
+        drones = new ArrayList<>();
+
     }
 
-    @Test
-    void test() {
-        assertTrue(true);
-    }
-
+    // DRONE SUBSYSTEM TESTS
     @Test
     void testFetchFireTask() throws InterruptedException{
+        Thread droneThread = new Thread();
+        Thread fireIncidentThread = new Thread();
+
         droneThread.start();
         fireIncidentThread.start();
 
@@ -75,6 +71,79 @@ public class TestSystem {
 
         drone.refillAgent();
         assertEquals(15, drone.getAgentLevel());
+    }
+
+    // SCHEDULER TESTS
+    @Test
+    void testExtractFireEvent(){
+        String input = "[Scheduler <- Drone] FAULT: FireEvent{'ID=123', time='2025-03-28 14:00:00', zoneId=5, eventType='FAULTED', severity='High', state='Active', failure='FAULT'}";
+        String expected = "FireEvent{'ID=123', time='2025-03-28 14:00:00', zoneId=5, eventType='FAULTED', severity='High', state='Active', failure='FAULT'}";
+
+        String result = modScheduler.extractFireEvent(input);
+
+        assertEquals(expected, result);
+    }
+
+    @Test
+    void testGetAvailableDrone(){
+        DroneStatus idleDrone = new DroneStatus(1, 101, "IDLE", null);
+        DroneStatus usedDrone = new DroneStatus(2, 102, "USED", null);
+
+        modScheduler.getDrones().add(idleDrone);
+        modScheduler.getDrones().add(usedDrone);
+
+        DroneStatus availableDrone = modScheduler.getAvailableDrone();
+
+        assertEquals(idleDrone, availableDrone, "Returned drone should be idle drone");
+
+        assertNotNull(availableDrone, "A drone should be available");
+        assertEquals("USED", idleDrone.getState(), "State of idle drone should be changed to USED");
+    }
+
+    @Test
+    void testHandleEvent(){
+        String event = "[DRONE: 101][PORT: 1][STATE: IDLE]";
+        EventStatus status = modScheduler.handleEvent(event);
+
+        // verify new drone event returns IDLE
+        assertEquals("IDLE", status.getCommand());
+
+        DroneStatus drone = status.getDroneStatus();
+
+        // verify that the drone has been created
+        assertNotNull(drone);
+        assertEquals(101, drone.getDroneID());
+        assertEquals("IDLE", drone.getState());
+    }
+
+
+    // FIRE INCIDENT SUBSYSTEM TESTS
+    @Test
+    void testRunMethod() throws InterruptedException {
+        Thread droneThread = new Thread();
+        Thread fireIncidentThread = new Thread();
+
+        droneThread.start();
+        fireIncidentThread.start();
+
+        // Wait for both threads to finish processing
+        fireIncidentThread.join(5000); // Wait for up to 5 seconds for the fire incident thread to finish
+        droneThread.join(5000); // Wait for up to 5 seconds for the drone thread to finish
+
+        // Verify interactions with the test scheduler
+        List<FireEvent> eventsSent = modScheduler.getEventsSent();
+        List<FireEvent> responsesReceived = modScheduler.getResponsesReceived();
+
+        // Verify the number of events sent and responses received
+        assertEquals(0, eventsSent.size(), "Expected 2 fire events to be sent to the scheduler");
+        assertEquals(0, responsesReceived.size(), "Expected 0 responses from the drone subsystem");
+
+        // Verify specific events sent to the scheduler
+        FireEvent event1 = new FireEvent(1, "10:00", 1, "FIRE_DETECTED", "High", "FAULT");
+        FireEvent event2 = new FireEvent(2, "10:05", 2, "FIRE_DETECTED", "Moderate", "None");
+
+        assertFalse(eventsSent.contains(event1), "Expected event1 to be sent to the scheduler");
+        assertFalse(eventsSent.contains(event2), "Expected event2 to be sent to the scheduler");
     }
 
 }
