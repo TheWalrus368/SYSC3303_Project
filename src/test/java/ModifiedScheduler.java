@@ -1,5 +1,4 @@
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -7,10 +6,12 @@ public class ModifiedScheduler extends Scheduler {
     public List<DroneStatus> drones;
     public final List<FireEvent> eventsSent = new ArrayList<>();
     public final List<FireEvent> responsesReceived = new ArrayList<>();
+    public BoundedBuffer fireToDroneBuffer;
 
     public ModifiedScheduler() {
         super();
         this.drones= new ArrayList<>();
+        this.fireToDroneBuffer = new BoundedBuffer();
     }
 
     public List<DroneStatus> getDrones(){
@@ -82,6 +83,58 @@ public class ModifiedScheduler extends Scheduler {
                 return new EventStatus("ERROR");
             }
         }
+    }
+
+    @Override
+    public void addSortFires(String requestData){
+        // Add the fire request to the buffer
+        fireToDroneBuffer.addLast(requestData);
+
+        //System.out.println("BUFFER BEFORE SORTING: " + this.fireToDroneBuffer);
+
+        // Sort the buffer
+        BoundedBuffer sortedFireBuffer  = new BoundedBuffer();
+        List<String> fireEvents         = new ArrayList<>();
+        List<String> severityOrder      = Arrays.asList("High", "Moderate", "Low");
+        int count                       = fireToDroneBuffer.getCount();
+
+        for (int i = 0; i < count; i++) {
+            Object event = fireToDroneBuffer.removeFirst();
+            if (event instanceof String) {
+                fireEvents.add((String) event);
+            }
+        }
+
+        // Sorting algorithm for the fire events
+        Collections.sort(fireEvents, new Comparator<String>() {
+            public int compare(String e1, String e2) {
+                Pattern pattern     = Pattern.compile("severity='(High|Moderate|Low)'");
+                Matcher matcher1    = pattern.matcher(e1);
+                Matcher matcher2    = pattern.matcher(e2);
+                int rank1 = severityOrder.size();
+                int rank2 = severityOrder.size();
+                if (matcher1.find()) {
+                    rank1 = severityOrder.indexOf(matcher1.group(1));
+                }
+                if (matcher2.find()) {
+                    rank2 = severityOrder.indexOf(matcher2.group(1));
+                }
+                return rank1 - rank2;
+            }
+        });
+
+        for (String event : fireEvents) {
+            sortedFireBuffer.addLast(event);
+        }
+
+        // Set the buffer to the sorted buffer
+        this.fireToDroneBuffer = sortedFireBuffer;
+
+        //try {
+        //    Thread.sleep(5000);
+        //} catch (InterruptedException e) {
+        //    throw new RuntimeException(e);
+        //}
     }
 
     public List<FireEvent> getEventsSent() {

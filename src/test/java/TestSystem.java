@@ -2,6 +2,9 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -73,11 +76,40 @@ public class TestSystem {
         assertEquals(15, drone.getAgentLevel());
     }
 
+    @Test
+    void testSimulateDroneTravel(){
+        assertEquals(drone.BASE_ZONE, drone.getCurrentZone());
+
+        drone.simulateDroneTravel(zoneA);
+
+        assertEquals(zoneA, drone.getCurrentZone());
+
+        double expectedX = (zoneA.getStartX() + zoneA.getEndX());
+        double expectedY = (zoneA.getStartY() + zoneA.getEndY());
+        assertEquals(expectedX, drone.droneX, 0.0001);
+        assertEquals(expectedY, drone.droneY, 0.0001);
+    }
+
+    @Test
+    void testCurrentFireExtinguished(){
+
+        FireEvent fireEvent = new FireEvent(1, "12:00", 101, "IDLE", "Moderate", "None");
+        drone.setCurrentFireEvent(fireEvent);
+
+        assertFalse(drone.currentFireExtinguished(), "Fire should not be extinguished yet");
+
+        // simulate extinguishing fire
+        int waterToDrop = 20;
+        drone.dropAgent(waterToDrop);
+        fireEvent.extinguish(waterToDrop);
+        assertTrue(drone.currentFireExtinguished());
+    }
+
     // SCHEDULER TESTS
     @Test
     void testExtractFireEvent(){
-        String input = "[Scheduler <- Drone] FAULT: FireEvent{'ID=123', time='2025-03-28 14:00:00', zoneId=5, eventType='FAULTED', severity='High', state='Active', failure='FAULT'}";
-        String expected = "FireEvent{'ID=123', time='2025-03-28 14:00:00', zoneId=5, eventType='FAULTED', severity='High', state='Active', failure='FAULT'}";
+        String input = "[Scheduler <- Drone] FAULT: FireEvent{'ID=123', time='2025-03-28 14:00:00', zoneId=5, eventType='DRONE_REQUEST', severity='High', state='Active', failure='FAULT'}";
+        String expected = "FireEvent{'ID=123', time='2025-03-28 14:00:00', zoneId=5, eventType='DRONE_REQUEST', severity='High', state='Active', failure='FAULT'}";
 
         String result = modScheduler.extractFireEvent(input);
 
@@ -116,6 +148,22 @@ public class TestSystem {
         assertEquals("IDLE", drone.getState());
     }
 
+    @Test
+    void testAddSortFires(){
+        String fire1 = "FireEvent{'ID=1', time='12:00', zoneId=1, eventType='FIRE_DETECTED', severity='High', state='Active', failure='Fault'}";
+        String fire2 = "FireEvent{'ID=2', time='12:05', zoneId=2, eventType='FIRE_DETECTED', severity='Low', state='Active', failure='None'}";
+        String fire3 = "FireEvent{'ID=3', time='12:10', zoneId=3, eventType='FIRE_DETECTED', severity='Moderate', state='Active', failure='None'}";
+
+        modScheduler.addSortFires(fire1);
+        modScheduler.addSortFires(fire2);
+        modScheduler.addSortFires(fire3);
+
+        assertEquals(fire1, modScheduler.fireToDroneBuffer.removeFirst()); // should be "High"
+        assertEquals(fire3, modScheduler.fireToDroneBuffer.removeFirst()); // should be "Moderate"
+        assertEquals(fire2, modScheduler.fireToDroneBuffer.removeFirst()); // should be "Low"
+
+    }
+
 
     // FIRE INCIDENT SUBSYSTEM TESTS
     @Test
@@ -145,5 +193,46 @@ public class TestSystem {
         assertFalse(eventsSent.contains(event1), "Expected event1 to be sent to the scheduler");
         assertFalse(eventsSent.contains(event2), "Expected event2 to be sent to the scheduler");
     }
+
+    @Test
+    void testExtractFireEventFromLine(){
+        String line = "12:00,1,FIRE_DETECTED,High,Fault";
+        FireEvent event = fireIncident.extractFireEventFromLine(line);
+
+        assertNotNull(event);
+        assertEquals(1, event.getFireID()); // First event should have ID 1
+        assertEquals("12:00", event.getTime());
+        assertEquals(1, event.getZoneId());
+        assertEquals("FIRE_DETECTED", event.getEventType());
+        assertEquals("High", event.getSeverity());
+    }
+
+//    @Test
+//    void testRpcSend(){
+//        try {
+//            FireEvent fireEvent = new FireEvent(1, "10:00", 1, "FIRE_DETECTED", "High", "FAULT");
+//
+//            String newFireReport = "NEW FIRE: " + fireEvent;
+//            byte[] dataBuffer = newFireReport.getBytes();
+//            DatagramPacket dataPacket = new DatagramPacket(dataBuffer, dataBuffer.length, InetAddress.getLocalHost(), 7000);
+//
+//            byte[] replyBuffer = new byte[200];
+//            DatagramPacket replyPacket = new DatagramPacket(replyBuffer, replyBuffer.length);
+//
+//            // simulate calling rpc_send
+//            fireIncident.rpc_send(dataPacket, replyPacket, fireEvent);
+//
+//            // check that the event was added to the events sent list
+//            List<FireEvent> eventsSent = modScheduler.getEventsSent();
+//
+//            // Optionally, you can check if other properties or states were updated as expected:
+//            assertEquals(1, eventsSent.size(), "The events sent list should contain exactly 1 event.");
+//
+//            // Check internal state, for example, the failure flag in the FireEvent object.
+//            assertTrue(fireEvent.getFailureFlag(), "The failure flag should be true for this fire event.");
+//        } catch (IOException e){
+//            e.printStackTrace();
+//        }
+//    }
 
 }
