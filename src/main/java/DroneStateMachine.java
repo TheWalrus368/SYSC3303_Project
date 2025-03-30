@@ -54,9 +54,11 @@ class EnRoute implements DroneState {
 class DroppingAgent implements DroneState {
     @Override
     public void handle(DroneStateMachine context){
+        // Handle faults
         if (context.getDrone().getCurrentFireEvent().getFailureFlag()){
             System.out.println("FAULTED: " + context.getDrone().toString());
             context.setState("FAULTED");
+            return;
         }
 
         DroneSubsystem drone = context.getDrone();

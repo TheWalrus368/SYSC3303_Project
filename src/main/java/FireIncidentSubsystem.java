@@ -12,10 +12,9 @@ import java.net.SocketException;
  */
 public class FireIncidentSubsystem implements Runnable {
     private final String csvFilePath;
-    private DatagramSocket sendReceiveSocket;
     private final int SCHEDULER_PORT = 7000;
     private int nextFireID = 1;
-    private static int port;
+    private static final int PORT = 8000;
 
     /**
      * Constructor to initialize the FireIncidentSubsystem with a CSV file path and a Scheduler.
@@ -24,14 +23,6 @@ public class FireIncidentSubsystem implements Runnable {
      */
     public FireIncidentSubsystem(String csvFilePath) {
         this.csvFilePath = csvFilePath;
-        try {
-            // Socket to send and receive packets from the Scheduler
-            sendReceiveSocket = new DatagramSocket();
-            port = sendReceiveSocket.getLocalPort();
-        } catch (SocketException e) {
-            e.printStackTrace();
-            System.exit(1);
-        }
     }
 
     /**
@@ -87,20 +78,24 @@ public class FireIncidentSubsystem implements Runnable {
      */
     private void rpc_send(DatagramPacket dataPacket, DatagramPacket replyPacket, FireEvent fireEvent) {
         try {
+            int fireID = fireEvent.getFireID();
+            int port = PORT + fireID;
+            DatagramSocket sendReceiveSocket = new DatagramSocket(port);
+
             // STEP 1: Send data to Scheduler
             sendReceiveSocket.send(dataPacket);
             String data = new String(dataPacket.getData(), 0, dataPacket.getLength());
-            System.out.println("[FireIncidentSubsystem -> Scheduler] Sent request: " + data);
+            System.out.println("[FireIncidentSubsystem -> Scheduler] Sent request [FIRE " + fireID + "]: " + data);
 
             // STEP 2: Wait to receive ack from scheduler
             byte[] ackBuffer = new byte[200];
             DatagramPacket ackPacket = new DatagramPacket(ackBuffer, ackBuffer.length);
             sendReceiveSocket.receive(ackPacket);
             String ackData = new String(ackPacket.getData(), 0, ackPacket.getLength());
-            System.out.println("[FireIncidentSubsystem <- Scheduler] Got reply: " + ackData);
+            System.out.println("[FireIncidentSubsystem <- Scheduler] Got Scheduler reply [FIRE " + fireID + "]:" + ackData);
 
             // STEP 3: Send request to scheduler for the drone reply
-            String request = "REQUEST CONFIRMATION: "  + fireEvent;
+            String request = "REQUEST CONFIRMATION: [FIRE " + fireID + "]:" + fireEvent;
             byte[] requestBuffer = request.getBytes();
 
             // Datagram packet to send request
@@ -110,14 +105,12 @@ public class FireIncidentSubsystem implements Runnable {
             // STEP 4: Wait to receive the server's response passed back through the host
             sendReceiveSocket.receive(replyPacket);
             String reply = new String(replyPacket.getData(), 0, replyPacket.getLength());
-            System.out.println("[Drone -> Scheduler -> FireIncidentSubsystem] Got reply: " + reply);
+            System.out.println("[Drone -> Scheduler -> FireIncidentSubsystem] Got Drone Reply [FIRE " + fireID + "]: " + reply);
 
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-
-    public static int getPort(){ return port; }
 
     public static void main(String[] args) {
         // CSV file path containing fire event data

@@ -207,14 +207,14 @@ class Scheduler implements Runnable{
 
         // Drone event
         if (matcher.find()) {
-            int droneID = Integer.parseInt(matcher.group(1));
-            int port = Integer.parseInt(matcher.group(2));
-            String state = matcher.group(3);
-
             // Drone faulting
             if (data.contains("FAULT")){
                 return new EventStatus("FAULT");
             }
+
+            int droneID = Integer.parseInt(matcher.group(1));
+            int port = Integer.parseInt(matcher.group(2));
+            String state = matcher.group(3);
 
             // If not a fault, handle the drone event
             DroneStatus newDrone = new DroneStatus(droneID, port, state, null);
@@ -235,7 +235,8 @@ class Scheduler implements Runnable{
         } else {
             if (data.contains("NEW FIRE")){
                 return new EventStatus("FIRE");
-            }else if (data.contains("REQUEST CONFIRMATION:")){
+            }
+            else if (data.contains("REQUEST CONFIRMATION:")){
                 return new EventStatus("CONFIRMATION");
             }
             else{
@@ -305,8 +306,6 @@ class Scheduler implements Runnable{
         // Add the fire request to the buffer
         fireToDroneBuffer.addLast(requestData);
 
-        //System.out.println("BUFFER BEFORE SORTING: " + this.fireToDroneBuffer);
-
         // Sort the buffer
         BoundedBuffer sortedFireBuffer  = new BoundedBuffer();
         List<String> fireEvents         = new ArrayList<>();
@@ -343,16 +342,8 @@ class Scheduler implements Runnable{
             sortedFireBuffer.addLast(event);
         }
 
-        //System.out.println("SORTED FIRE BUFFER " + sortedFireBuffer);
-
         // Set the buffer to the sorted buffer
         this.fireToDroneBuffer = sortedFireBuffer;
-
-        //try {
-        //    Thread.sleep(5000);
-        //} catch (InterruptedException e) {
-        //    throw new RuntimeException(e);
-        //}
     }
 
     /**
