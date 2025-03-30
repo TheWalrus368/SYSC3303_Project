@@ -58,36 +58,38 @@ The Class Diagram represents the structure of the system, showing relationships 
 
 											 2) The FireEvent entity which encapsulates fire event details.
 
-											 3) TestScheduler, which extends Scheduler for unit testing.
+Timing Diagram
+The Timing Diagram demonstrates how the drones behave during error scenarios
+
 
 Unit Tests
 -----------
 
 This project includes unit tests for verifying the behavior of each subsystem:
 
-1. DroneSubsystemTest
+1. ModifiedDroneSubsystem
 
-- Ensures that the DroneSubsystem correctly fetches tasks from the Scheduler.
+- A specialized subclass of DroneSubsystem for unit testing.
 
-- Validates that processed fire events are acknowledged correctly.
+- Overrides travel simulation to enable controlled movement for testing
 
-2. FireIncidentSubsystemTest
+2. ModifiedFireIncidentSubsystem
 
-- Verifies that fire events are correctly parsed from a CSV file.
+- A specialized subclass of FireIncidentSubsystem for unit testing.
 
-- Checks that events are sent to the Scheduler and processed correctly.
+- Overrides data ingestion to allow predefined fire event scenarios for testing
 
-3. SchedulerTest
-
-- Tests event reception, task delegation, and acknowledgment forwarding.
-
-- Ensures synchronization in task handling.
-
-4. TestScheduler
+3. ModifiedScheduler
 
 - A specialized subclass of Scheduler for unit testing.
 
-- Tracks sent events and responses to verify system behavior.
+- Overrides task assignment logic to prioritize test scenarios
+
+4. TestSystem
+
+- A test class that handles all testing across system
+
+- Tests the behaviour of DroneSubsystem, Scheduler, and FireIncidentSubsystem
 
 
 Running the Simulation
@@ -107,7 +109,7 @@ Prerequisites:
 Build and Execution Steps
 -------------------------
 
-1) Compile and run Simulation.java to start the system
+1) Compile and run separate classes in this specific order: Scheduler.java, FireEventSubsystem.java, DroneSubsystem.java
 
 2) Ensure the CSV file (fire_events.csv) contains sample fire incidents.
 
@@ -126,6 +128,6 @@ This project simulates a fire incident response system with multi-threading, sta
 
 Authors
 -------
-README and Javadocs written by Tony Situ
-Developed by Darren and Brian (main code) and Daniel (test cases)
-UML Diagrams by Claire (Class Diagram)
+README written by Claire and JavaDocs written by Brian and Darren
+Developed by Darren and Brian (main code) and Claire and Tony (test cases)
+UML Class Diagram by Tony and Timing Diagram by Daniel
