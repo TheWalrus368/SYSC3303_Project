@@ -84,9 +84,11 @@ class Scheduler implements Runnable{
                 // NEW DRONE READY TO EXTINGUISH ANY AVAILABLE FIRE
                 case "IDLE":
                     this.state = "DISPATCH_DRONE";
-
+                    System.out.println(this + "[Scheduler <- Drone] DRONE CHECK-IN " + requestData);
+                    String fireRequest;
                     // Step 3 (READY): Check for any unassigned fires. If there is a fire reply with fire
-                    String fireRequest = fireToDroneBuffer.removeFirst().toString();
+                    fireRequest = fireToDroneBuffer.removeFirst().toString();
+
                     byte[] fireRequestBuffer = fireRequest.getBytes();
 
                     // Select an available drone to handle the fire
@@ -101,11 +103,8 @@ class Scheduler implements Runnable{
                                                                     InetAddress.getLocalHost(),
                                                                     selectedDrone.getPort());
 
-                    System.out.println(this + " [Scheduler -> Drone] Reply for DRONE request with: " + fireRequest);
+                    System.out.println(this + "[Scheduler -> Drone] Reply for [DRONE " + selectedDrone.getDroneID() + "] request with: " + fireRequest);
                     sendSocket.send(assignDroneFirePacket);
-
-                    // Update the drones status to being used
-                    updateDroneState(selectedDrone.getDroneID(), "USED");
                     break;
 
                 // DRONE INDICATING IT HAS COMPLETED EXTINGUISHING FIRE
@@ -126,15 +125,12 @@ class Scheduler implements Runnable{
                             droneReply.length,
                             InetAddress.getLocalHost(),
                             port);
-                    System.out.println(this + " [Scheduler -> Drone] reply from COMPLETE request: " + ack);
+                    System.out.println(this + "[Scheduler -> Drone] reply from COMPLETE request: " + ack);
                     sendSocket.send(droneFireCompletePacket);
                     break;
 
                 case "FIRE":
                     this.state = "NEW_FIRE";
-
-                    // Add the fire request to the buffer
-                    //fireToDroneBuffer.addLast(requestData);
 
                     // Step 3 (FireEvent): Add fire to buffer and Sort the fireToDroneBuffer
                     this.addSortFires(requestData);
@@ -146,7 +142,7 @@ class Scheduler implements Runnable{
                             acknowledgmentBuffer.length,
                             InetAddress.getLocalHost(),
                             requestPacket.getPort());
-                    System.out.println(this + " [Scheduler -> FireIncidentSubsystem] Sent acknowledgement: " + acknowledgment + " to " + InetAddress.getLocalHost() + ":" + requestPacket.getPort());
+                    System.out.println(this + "[Scheduler -> FireIncidentSubsystem] Sent acknowledgement: " + acknowledgment + " to " + InetAddress.getLocalHost() + ":" + requestPacket.getPort());
                     sendSocket.send(acknowledgementPacket);
                     break;
 
@@ -170,7 +166,7 @@ class Scheduler implements Runnable{
                             confirmReply.length,
                             InetAddress.getLocalHost(),
                             requestPacket.getPort());
-                    System.out.println(this + " [Scheduler -> FireIncidentSubsystem] Fire: " + fireID + " is out: " + confirmation);
+                    System.out.println(this + "[Scheduler -> FireIncidentSubsystem] Fire: " + fireID + " is out: " + confirmation);
                     sendSocket.send(droneAcknowledgementPacket);
 
                     break;
@@ -178,6 +174,7 @@ class Scheduler implements Runnable{
                     System.out.println("[Scheduler <- Drone] " + requestData);
                     String unfaultedFireEvent = extractFireEvent(requestData).replace("FAULT", "NONE");
                     System.out.println("[Scheduler] Adding fire back to list " + unfaultedFireEvent);
+
                     // Reset the fire to no trigger a fault for the next drone
                     this.addSortFires("NEW FIRE: "+ unfaultedFireEvent);
                     break;
@@ -219,19 +216,21 @@ class Scheduler implements Runnable{
             // If not a fault, handle the drone event
             DroneStatus newDrone = new DroneStatus(droneID, port, state, null);
             synchronized (drones) {
+                // Check if the drone already exists
                 for (DroneStatus existingDrone : drones) {
                     if (existingDrone.getDroneID() == newDrone.getDroneID()) {
-                        // An existing drone has COMPLETED its fire service
+                        // Drone has COMPLETED its fire service
                         if (newDrone.getState().equals("COMPLETE")) {
                             return new EventStatus("COMPLETE", newDrone);
                         }
                     }
                 }
-                // New drone, register it to the list of drones
+                // Drone does not exist, new drone: register it to the list of drones
                 drones.add(newDrone);
             }
             // Create and return a new event to handle a ready drone
             return new EventStatus("IDLE");
+
         } else {
             if (data.contains("NEW FIRE")){
                 return new EventStatus("FIRE");
@@ -257,28 +256,13 @@ class Scheduler implements Runnable{
         return "Could not find fire event."; // No match found
     }
 
-
-    /**
-     * Returns the port of the drone
-     * @param droneID The drone's id
-     * @return The port of the drone with the same DroneID
-     */
-    public int getDronePort(int droneID){
-        for (DroneStatus drone: drones){
-            if (drone.getDroneID() == droneID){
-                return drone.getPort();
-            }
-        }
-        return -1;
-    }
-
     /**
      * @return The available drone from the list of drones and changes its state to "USED"
      */
     public synchronized DroneStatus getAvailableDrone(){
         for (DroneStatus drone: drones){
             if (drone.getState().equals("IDLE")){
-                drone.setState("USED");
+                this.updateDroneState(drone.getDroneID(), "USED");
                 return drone;
             }
         }
@@ -290,10 +274,12 @@ class Scheduler implements Runnable{
      * @param droneID The drone's id of the drone that needs to have its state updated
      * @param newState The new state that the drone needs to update to
      */
-    public synchronized void updateDroneState(int droneID, String newState) {
-        for (DroneStatus drone: drones){
-            if (drone.getDroneID() == droneID){
-                drone.setState(newState);
+    public void updateDroneState(int droneID, String newState) {
+        synchronized (drones) {
+            for (DroneStatus drone : drones) {
+                if (drone.getDroneID() == droneID) {
+                    drone.setState(newState);
+                }
             }
         }
     }
@@ -303,47 +289,51 @@ class Scheduler implements Runnable{
      * @param requestData the request for a new fire
      */
     public synchronized void addSortFires(String requestData) {
-        // Add the fire request to the buffer
-        fireToDroneBuffer.addLast(requestData);
+        synchronized (fireToDroneBuffer){
+            // Add the fire request to the buffer
+            fireToDroneBuffer.addLast(requestData);
 
-        // Sort the buffer
-        BoundedBuffer sortedFireBuffer  = new BoundedBuffer();
-        List<String> fireEvents         = new ArrayList<>();
-        List<String> severityOrder      = Arrays.asList("High", "Moderate", "Low");
-        int count                       = fireToDroneBuffer.getCount();
+            // Sort the buffer
+            BoundedBuffer sortedFireBuffer  = new BoundedBuffer();
+            List<String> fireEvents         = new ArrayList<>();
+            List<String> severityOrder      = Arrays.asList("High", "Moderate", "Low");
+            int count                       = fireToDroneBuffer.getCount();
 
-        for (int i = 0; i < count; i++) {
-            Object event = fireToDroneBuffer.removeFirst();
-            if (event instanceof String) {
-                fireEvents.add((String) event);
+            if (count > 1) {
+                for (int i = 0; i < count; i++) {
+                    Object event = fireToDroneBuffer.removeFirst();
+                    if (event instanceof String) {
+                        fireEvents.add((String) event);
+                    }
+                }
+
+                // Sorting algorithm for the fire events
+                Collections.sort(fireEvents, new Comparator<String>() {
+                    public int compare(String e1, String e2) {
+                        Pattern pattern = Pattern.compile("severity='(High|Moderate|Low)'");
+                        Matcher matcher1 = pattern.matcher(e1);
+                        Matcher matcher2 = pattern.matcher(e2);
+                        int rank1 = severityOrder.size();
+                        int rank2 = severityOrder.size();
+                        if (matcher1.find()) {
+                            rank1 = severityOrder.indexOf(matcher1.group(1));
+                        }
+                        if (matcher2.find()) {
+                            rank2 = severityOrder.indexOf(matcher2.group(1));
+                        }
+                        return rank1 - rank2;
+                    }
+                });
+
+                //System.out.println("SORTED FIRE EVENT LIST: " + fireEvents);
+                for (String event : fireEvents) {
+                    sortedFireBuffer.addLast(event);
+                }
+
+                // Set the buffer to the sorted buffer
+                this.fireToDroneBuffer = sortedFireBuffer;
             }
         }
-
-        // Sorting algorithm for the fire events
-        Collections.sort(fireEvents, new Comparator<String>() {
-            public int compare(String e1, String e2) {
-                Pattern pattern     = Pattern.compile("severity='(High|Moderate|Low)'");
-                Matcher matcher1    = pattern.matcher(e1);
-                Matcher matcher2    = pattern.matcher(e2);
-                int rank1 = severityOrder.size();
-                int rank2 = severityOrder.size();
-                if (matcher1.find()) {
-                    rank1 = severityOrder.indexOf(matcher1.group(1));
-                }
-                if (matcher2.find()) {
-                    rank2 = severityOrder.indexOf(matcher2.group(1));
-                }
-                return rank1 - rank2;
-            }
-        });
-
-        //System.out.println("SORTED FIRE EVENT LIST: " + fireEvents);
-        for (String event : fireEvents) {
-            sortedFireBuffer.addLast(event);
-        }
-
-        // Set the buffer to the sorted buffer
-        this.fireToDroneBuffer = sortedFireBuffer;
     }
 
     /**
@@ -384,7 +374,6 @@ class Scheduler implements Runnable{
     public String toString(){
         return "[SCHEDULER][STATE: " + this.state + "]";
     }
-
 
     /**
      * @param zoneId The ID of the zone to retrieve.

@@ -92,7 +92,7 @@ public class FireIncidentSubsystem implements Runnable {
             DatagramPacket ackPacket = new DatagramPacket(ackBuffer, ackBuffer.length);
             sendReceiveSocket.receive(ackPacket);
             String ackData = new String(ackPacket.getData(), 0, ackPacket.getLength());
-            System.out.println("[FireIncidentSubsystem <- Scheduler] Got Scheduler reply [FIRE " + fireID + "]:" + ackData);
+            System.out.println("[FireIncidentSubsystem <- Scheduler] Got Scheduler reply [FIRE " + fireID + "]: " + ackData);
 
             // STEP 3: Send request to scheduler for the drone reply
             String request = "REQUEST CONFIRMATION: [FIRE " + fireID + "]:" + fireEvent;

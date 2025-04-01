@@ -56,4 +56,12 @@ class DroneStatus {
      * @return true if the fire is complete, and false otherwise
      */
     public boolean isFireComplete(){return this.fireComplete;}
+
+    /**
+     * @return String representation of a drone
+     */
+    @Override
+    public String toString(){
+        return "[ID:" + this.droneId + "][PORT:" + this.port + "][STATE:" + this.state +"]";
+    }
 }

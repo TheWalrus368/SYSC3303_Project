@@ -13,7 +13,7 @@ public class DroneSubsystem implements Runnable {
     private FireEvent currentFireEvent;
     public FireEvent lastFireEvent;
     private static final int MAX_AGENT_CAP = 15; // Max payload is 15kg
-    private static final int SPEED = 200;
+    private static final int SPEED = 300;
     private DatagramSocket sendSocket, receiveSocket;
     private static final int BASE_PORT = 6000;
     private static final int SCHEDULER_PORT = 7000;
@@ -23,7 +23,7 @@ public class DroneSubsystem implements Runnable {
     private Zone currentZone;
     private Zone nextDestination;
     public static final Zone BASE_ZONE = new Zone(0, 0, 0, 0, 0);
-    private DroneStateMachine stateMachine = new DroneStateMachine(this);
+    private final DroneStateMachine stateMachine = new DroneStateMachine(this);
 
     /**
      * Constructs a DroneSubsystem with a reference to the Scheduler.
@@ -77,13 +77,13 @@ public class DroneSubsystem implements Runnable {
        try{
            // STEP 1: Send a request to scheduler for any new fires / register to drone to the schedulers knowledge
            String sendData            = new String(requestPacket.getData(), 0, requestPacket.getLength());
-           System.out.println("[Drone -> Scheduler] Sending Drone request: " + sendData);
+           System.out.println("[Drone -> Scheduler]" + this + " Sending Drone request: " + sendData);
            sendSocket.send(requestPacket);
 
            // STEP 2: Wait to receive reply from host with new data
            receiveSocket.receive(receivePacket);
            String receiveData            = new String(receivePacket.getData(), 0, receivePacket.getLength());
-           System.out.println("[Drone <- Scheduler] Drone received: " + receiveData);
+           System.out.println("[Drone <- Scheduler]" + this + " Drone received: " + receiveData);
        }
        catch (IOException e){
            e.printStackTrace();
@@ -296,19 +296,19 @@ public class DroneSubsystem implements Runnable {
 
     public static void main(String[] args) {
         // Initialize DroneSubsystems
-        DroneSubsystem droneSubsystem = new DroneSubsystem(100);
+        DroneSubsystem droneSubsystem1 = new DroneSubsystem(100);
         DroneSubsystem droneSubsystem2 = new DroneSubsystem(200);
         DroneSubsystem droneSubsystem3 = new DroneSubsystem(300);
         DroneSubsystem droneSubsystem4 = new DroneSubsystem(400);
 
         // Start threads
-        Thread droneThread = new Thread(droneSubsystem, "DRONE 1");
+        Thread droneThread1 = new Thread(droneSubsystem1, "DRONE 1");
         Thread droneThread2 = new Thread(droneSubsystem2, "DRONE 2");
         Thread droneThread3 = new Thread(droneSubsystem3, "DRONE 3");
         Thread droneThread4 = new Thread(droneSubsystem4, "DRONE 4");
 
         // Begin execution of subsystems
-        droneThread.start();
+        droneThread1.start();
         droneThread2.start();
         droneThread3.start();
         droneThread4.start();
