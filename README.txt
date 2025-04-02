@@ -109,7 +109,7 @@ Prerequisites:
 Build and Execution Steps
 -------------------------
 
-1) Compile and run separate classes in this specific order: Scheduler.java, FireEventSubsystem.java, DroneSubsystem.java
+1) Compile and run separate classes in this specific order: Scheduler.java, FireIncidentSubsystem.java, DroneSubsystem.java
 
 2) Ensure the CSV file (fire_events.csv) contains sample fire incidents.
 

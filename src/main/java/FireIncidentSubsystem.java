@@ -99,12 +99,17 @@ public class FireIncidentSubsystem implements Runnable {
             byte[] requestBuffer = request.getBytes();
 
             // Datagram packet to send request
+            long startTime = System.currentTimeMillis(); // start time to extinguish fire
             DatagramPacket requestPacket = new DatagramPacket(requestBuffer, requestBuffer.length, InetAddress.getLocalHost(), SCHEDULER_PORT);
             sendReceiveSocket.send(requestPacket);
 
             // STEP 4: Wait to receive the server's response passed back through the host
             sendReceiveSocket.receive(replyPacket);
             String reply = new String(replyPacket.getData(), 0, replyPacket.getLength());
+            long endTime = System.currentTimeMillis(); // end time of extinguished fire
+            long extinguishedTime = endTime - startTime;
+
+            MetricsLogger.logEvent("FIRE", "FIRE_EXTINGUISHED", extinguishedTime,"Time taken to extinguish fire (ms)");
             System.out.println("[Drone -> Scheduler -> FireIncidentSubsystem] Got Drone Reply [FIRE " + fireID + "]: " + reply);
 
         } catch (IOException e) {
@@ -113,6 +118,9 @@ public class FireIncidentSubsystem implements Runnable {
     }
 
     public static void main(String[] args) {
+        // Start logging daemon
+        MetricsLogger.startDaemon();
+
         // CSV file path containing fire event data
         String csvFilePath = "src/main/java/fire_events.csv";
 
@@ -122,6 +130,15 @@ public class FireIncidentSubsystem implements Runnable {
         // Start Thread
         Thread fireIncidentThread = new Thread(fireIncidentSubsystem, "FIRE");
         fireIncidentThread.start();
+
+        try {
+            fireIncidentThread.join(); // wait for thread to end to print metrics
+        } catch(InterruptedException e){
+            e.printStackTrace();
+        }
+
+        LogAnalyzer analyzer = new LogAnalyzer();
+        analyzer.printMetrics();
 
     }
 

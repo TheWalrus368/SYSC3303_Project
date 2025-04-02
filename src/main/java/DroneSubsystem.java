@@ -225,6 +225,8 @@ public class DroneSubsystem implements Runnable {
         // Calculate the distance to the center
         double distance = Math.sqrt(Math.pow(centerX - droneX, 2) + Math.pow(centerY - droneY, 2));
 
+        MetricsLogger.logEvent("DRONE", "DRONE_TRAVELS", Double.parseDouble(String.format("%.2f", distance)), "Required distance to reach target fire (m)");
+
         // Assume a fixed speed (units per second)
 
         // Calculate travel time in milliseconds
@@ -295,6 +297,9 @@ public class DroneSubsystem implements Runnable {
     }
 
     public static void main(String[] args) {
+        // Start logging daemon
+        MetricsLogger.startDaemon();
+
         // Initialize DroneSubsystems
         DroneSubsystem droneSubsystem1 = new DroneSubsystem(100);
         DroneSubsystem droneSubsystem2 = new DroneSubsystem(200);
