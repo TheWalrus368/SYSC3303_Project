@@ -59,6 +59,18 @@ public class FireIncidentSubsystem implements Runnable {
         } catch (IOException ignored) { }
     }
 
+    /**
+    * Creates and configures a new Thread designed to handle the remote procedure call (RPC)
+    * for reporting a specific fire event to the Scheduler.
+    *
+    * @param fireEvent The {@link FireEvent} object containing the details of the fire incident
+    * to be reported via RPC.
+    * @return A new, unstarted {@link Thread} which, when its {@code start()} method is called,
+    * will execute the RPC send and receive logic for the given fire event.
+    * @throws UnknownHostException If the local host IP address cannot be determined by
+    * {@link InetAddress#getLocalHost()}, which is used to set
+    * the destination address for the initial DatagramPacket.
+    */
     private Thread getThread(FireEvent fireEvent) throws UnknownHostException {
         String newFireReport = "NEW FIRE: " + fireEvent;
         byte[] dataBuffer = newFireReport.getBytes();
@@ -74,11 +86,13 @@ public class FireIncidentSubsystem implements Runnable {
     }
 
     /**
-     * Calculates the time difference between two fire events.
+     * Calculates the time difference between two sequential fire events based on their
+     * time strings.
      *
-     * @param previousEvent The preceding FireEvent.
-     * @param currentEvent  The current FireEvent.
-     * @return The Duration between the events, or Duration.ZERO if calculation fails.
+     * @param previousEvent The preceding {@link FireEvent} in the sequence. Must not be null.
+     * @param currentEvent  The current (subsequent) {@link FireEvent} in the sequence. Must not be null.
+     * @return The calculated {@link Duration} representing the time elapsed between the
+     * timestamps of the previous and current events.
      */
     private Duration calculateTimeDifference(FireEvent previousEvent, FireEvent currentEvent) {
         try {
@@ -105,6 +119,19 @@ public class FireIncidentSubsystem implements Runnable {
         }
     }
 
+    /**
+     * Pauses the execution of the current thread for a duration derived from the
+     * calculated time difference between consecutive fire events, simulating the
+     * passage of time as indicated in the input file.
+     * <p>
+     * If the provided {@code timeDifference} is zero or negative, no sleep occurs. A warning
+     * message is printed if the duration is negative. Any {@link InterruptedException} during
+     * the sleep is caught and ignored, causing the method to return early.
+     *
+     * @param timeDifference The {@link Duration} calculated between the previous and the
+     * current fire event. The actual sleep time is derived and scaled
+     * from this value.
+     */
     private void simulateTimePassing(Duration timeDifference) {
         if (!timeDifference.isZero() && !timeDifference.isNegative()) {
             long sleepMillis = timeDifference.toMillis();
@@ -190,6 +217,10 @@ public class FireIncidentSubsystem implements Runnable {
         }
     }
 
+    /**
+     * Returns a list of RPC threads
+     * @return rpcThreads, that is the list of threads
+     */
     public List<Thread> getRPCThreads(){
         return rpcThreads;
     }
