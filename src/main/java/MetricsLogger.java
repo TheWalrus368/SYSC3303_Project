@@ -49,7 +49,7 @@ public class MetricsLogger {
      * @param value accepts either Long or Double type to account for time or distance values
      * @param details Additional details about the event
      */
-    public static void logEvent(String entity, String eventCode, Number value, String details){
+    public static void logEvent(String entity, String eventCode, double value, String details){
         String timestamp = new SimpleDateFormat("HH:mm:ss.SSS").format(new Date());
         String event = timestamp + ", " + entity + ", " + eventCode + ", " + value + ", " + details;
         synchronized (lock) {

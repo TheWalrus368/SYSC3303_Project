@@ -78,6 +78,7 @@ public class FireIncidentSubsystem implements Runnable {
      */
     private void rpc_send(DatagramPacket dataPacket, DatagramPacket replyPacket, FireEvent fireEvent) {
         try {
+            double startResponseTime = System.currentTimeMillis();
             int fireID = fireEvent.getFireID();
             int port = PORT + fireID;
             DatagramSocket sendReceiveSocket = new DatagramSocket(port);
@@ -99,17 +100,22 @@ public class FireIncidentSubsystem implements Runnable {
             byte[] requestBuffer = request.getBytes();
 
             // Datagram packet to send request
-            long startTime = System.currentTimeMillis(); // start time to extinguish fire
+            double startExtinguishTime = System.currentTimeMillis(); // start time to extinguish fire
             DatagramPacket requestPacket = new DatagramPacket(requestBuffer, requestBuffer.length, InetAddress.getLocalHost(), SCHEDULER_PORT);
             sendReceiveSocket.send(requestPacket);
 
             // STEP 4: Wait to receive the server's response passed back through the host
             sendReceiveSocket.receive(replyPacket);
             String reply = new String(replyPacket.getData(), 0, replyPacket.getLength());
-            long endTime = System.currentTimeMillis(); // end time of extinguished fire
-            long extinguishedTime = endTime - startTime;
+            double endTime = System.currentTimeMillis(); // end time of extinguished fire and response time
+            double extinguishedTime = endTime - startExtinguishTime;
+            double responseTime = endTime - startResponseTime;
 
-            MetricsLogger.logEvent("FIRE", "FIRE_EXTINGUISHED", extinguishedTime,"Time taken to extinguish fire (ms)");
+            // record specific fire
+            MetricsLogger.logEvent("FIRE " + fireID, "FIRE_EXTINGUISHED", extinguishedTime,"Time taken to extinguish fire (ms)");
+            // record FireIncidentSubsystem's response time
+
+            MetricsLogger.logEvent("FIRE_INCIDENT_SUBSYSTEM", "FIRE_RESPONSE", responseTime, "Response time of FireIncidentSubsystem (ms)");
             System.out.println("[Drone -> Scheduler -> FireIncidentSubsystem] Got Drone Reply [FIRE " + fireID + "]: " + reply);
 
         } catch (IOException e) {
