@@ -57,7 +57,7 @@ public class FireIncidentSubsystem implements Runnable {
 
                     } catch (InterruptedException ignored) { }
                 } else if (timeDifference.isNegative()) {
-                    System.out.println("--- Warning: Current event time is before previous event time. Processing immediately.");
+                    System.out.println("Warning: Current event time is before previous event time.");
                 }
 
                 Thread rpcThread = getThread(fireEvent);
