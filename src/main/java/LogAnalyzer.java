@@ -82,6 +82,13 @@ public class LogAnalyzer {
         calculateMetrics();
     }
 
+    /**
+     * Calculates various performance metrics related to the system
+     * It computes:
+     * - The total time taken to extinguish fires
+     * - The average response times for Scheduler, FireIncidentSubsystem, and all drones
+     * - The average response time for each individual drone
+     */
     private void calculateMetrics(){
         double totalExtinguishedTime = 0.0;
         Map<String, Double> avgDroneTimes = new HashMap<>();
@@ -118,6 +125,15 @@ public class LogAnalyzer {
 
     }
 
+    /**
+     * Writes the calculated performance metrics to a log file. It also clears the
+     * previous file's content at startup
+     * @param totalExtinguishedTime The total time taken to extinguish all fires
+     * @param avgDroneTimes A map containing the average response times of each drone
+     * @param overallDroneResponseTime The overall average response time of all drones
+     * @param avgSchedulerTime The average response time of the Scheduler
+     * @param avgFireTime The average response time of the FireIncidentSubsystem
+     */
     private void writeMetricsLog(double totalExtinguishedTime, Map<String, Double> avgDroneTimes, double overallDroneResponseTime, double avgSchedulerTime, double avgFireTime){
         // to overwrite the previous file entry
         try (FileWriter writer = new FileWriter(METRICS_FILE, false)){
