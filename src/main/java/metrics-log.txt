@@ -1,0 +1,9 @@
+-------PERFORMANCE METRICS -------
+Extinguished Times for each Fire Incident:
+Total Extinguishing Time: 0.0 ms
+
+Drone Response Times:
+
+Overall Average Drone Response Time: 0.0 ms
+Average Scheduler Response Time: 0.0 ms
+Average Fire Incident Response Time: 0.0 ms

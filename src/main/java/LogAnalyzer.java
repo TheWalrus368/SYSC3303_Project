@@ -130,9 +130,7 @@ public class LogAnalyzer {
         // write calculated metrics into log
         try(FileWriter writer = new FileWriter(METRICS_FILE, true)){
 
-            writer.write("------PERFORMANCE METRICS ------\n");
-
-            writer.write("Total Extinguishing Time: " + totalExtinguishedTime + " ms\n");
+            writer.write("-------PERFORMANCE METRICS -------\n");
 
             // write each extinguished time
             writer.write("Extinguished Times for each Fire Incident:\n");
@@ -142,8 +140,10 @@ public class LogAnalyzer {
                 writer.write(entity + ": " + extinguishedTime + " ms\n");
             }
 
+            writer.write("Total Extinguishing Time: " + totalExtinguishedTime + " ms\n");
+
             // write each drone's response time
-            writer.write("Drone Response Times:\n");
+            writer.write("\nDrone Response Times:\n");
             for (Map.Entry<String, Double> entry : avgDroneTimes.entrySet()) {
                 String droneId = entry.getKey();
                 double avgTime = entry.getValue();
