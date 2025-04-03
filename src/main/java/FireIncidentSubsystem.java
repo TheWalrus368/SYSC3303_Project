@@ -153,7 +153,7 @@ public class FireIncidentSubsystem implements Runnable {
             // STEP 1: Send data to Scheduler
             sendReceiveSocket.send(dataPacket);
             String data = new String(dataPacket.getData(), 0, dataPacket.getLength());
-            System.out.println("[FireIncidentSubsystem -> Scheduler] Sent request [FIRE " + fireID + "]: " + data);
+            Print.blue("[FireIncidentSubsystem -> Scheduler] Sent request [FIRE " + fireID + "]: " + data);
 
             // STEP 2: Wait to receive ack from scheduler
             byte[] ackBuffer = new byte[200];
