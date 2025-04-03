@@ -48,17 +48,8 @@ public class FireIncidentSubsystem implements Runnable {
                 if (prevFireEvent != null) {
                     timeDifference = calculateTimeDifference(prevFireEvent, fireEvent);
                 }
-                // Simulate Time Passing ---
-                if (!timeDifference.isZero() && !timeDifference.isNegative()) {
-                    long sleepMillis = timeDifference.toMillis();
-                    try {
-                        Thread.sleep(sleepMillis/60);
-                        // TODO remove division of 60 to simulate actual time
 
-                    } catch (InterruptedException ignored) { }
-                } else if (timeDifference.isNegative()) {
-                    System.out.println("Warning: Current event time is before previous event time.");
-                }
+                simulateTimePassing(timeDifference);
 
                 Thread rpcThread = getThread(fireEvent);
                 rpcThreads.add(rpcThread);
@@ -111,6 +102,19 @@ public class FireIncidentSubsystem implements Runnable {
             return Duration.ZERO; // Return zero duration on parsing error
         } catch (Exception ignored) {
             return Duration.ZERO; // Return zero duration on other errors
+        }
+    }
+
+    private void simulateTimePassing(Duration timeDifference) {
+        if (!timeDifference.isZero() && !timeDifference.isNegative()) {
+            long sleepMillis = timeDifference.toMillis();
+            try {
+                Thread.sleep(sleepMillis/60);
+                // TODO remove division of 60 to simulate actual time
+
+            } catch (InterruptedException ignored) { }
+        } else if (timeDifference.isNegative()) {
+            System.out.println("Warning: Current event time is before previous event time.");
         }
     }
 
