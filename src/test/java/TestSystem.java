@@ -207,32 +207,4 @@ public class TestSystem {
         assertEquals("High", event.getSeverity());
     }
 
-//    @Test
-//    void testRpcSend(){
-//        try {
-//            FireEvent fireEvent = new FireEvent(1, "10:00", 1, "FIRE_DETECTED", "High", "FAULT");
-//
-//            String newFireReport = "NEW FIRE: " + fireEvent;
-//            byte[] dataBuffer = newFireReport.getBytes();
-//            DatagramPacket dataPacket = new DatagramPacket(dataBuffer, dataBuffer.length, InetAddress.getLocalHost(), 7000);
-//
-//            byte[] replyBuffer = new byte[200];
-//            DatagramPacket replyPacket = new DatagramPacket(replyBuffer, replyBuffer.length);
-//
-//            // simulate calling rpc_send
-//            fireIncident.rpc_send(dataPacket, replyPacket, fireEvent);
-//
-//            // check that the event was added to the events sent list
-//            List<FireEvent> eventsSent = modScheduler.getEventsSent();
-//
-//            // Optionally, you can check if other properties or states were updated as expected:
-//            assertEquals(1, eventsSent.size(), "The events sent list should contain exactly 1 event.");
-//
-//            // Check internal state, for example, the failure flag in the FireEvent object.
-//            assertTrue(fireEvent.getFailureFlag(), "The failure flag should be true for this fire event.");
-//        } catch (IOException e){
-//            e.printStackTrace();
-//        }
-//    }
-
 }

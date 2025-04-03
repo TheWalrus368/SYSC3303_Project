@@ -1,0 +1,19 @@
+-------PERFORMANCE METRICS -------
+Time to Extinguish Each Fire Incident:
+FIRE 6: 23427.0 ms
+FIRE 7: 7395.0 ms
+FIRE 4: 13574.0 ms
+FIRE 5: 19967.0 ms
+FIRE 2: 19958.0 ms
+FIRE 1: 7394.0 ms
+Total Extinguishing Time: 91715.0 ms
+
+Drone Response Times:
+DRONE 400: 5.33 ms
+DRONE 300: 8.0 ms
+DRONE 200: 7.0 ms
+DRONE 100: 3.57 ms
+
+Overall Average Drone Response Time: 5.98 ms
+Average Scheduler Response Time: 3989.78 ms
+Average Fire Incident Response Time: 15311.67 ms

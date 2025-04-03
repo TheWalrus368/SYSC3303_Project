@@ -75,6 +75,8 @@ public class DroneSubsystem implements Runnable {
      */
     public synchronized DatagramPacket rpc_send(DatagramPacket requestPacket, DatagramPacket receivePacket){
        try{
+           double startTime = System.currentTimeMillis();
+
            // STEP 1: Send a request to scheduler for any new fires / register to drone to the schedulers knowledge
            String sendData            = new String(requestPacket.getData(), 0, requestPacket.getLength());
            System.out.println("[Drone -> Scheduler]" + this + " Sending Drone request: " + sendData);
@@ -84,10 +86,16 @@ public class DroneSubsystem implements Runnable {
            receiveSocket.receive(receivePacket);
            String receiveData            = new String(receivePacket.getData(), 0, receivePacket.getLength());
            System.out.println("[Drone <- Scheduler]" + this + " Drone received: " + receiveData);
+
+           double endTime = System.currentTimeMillis();
+           double responseTime = endTime - startTime;
+
+           MetricsLogger.logEvent("DRONE " + this.droneID, "DRONE_RESPONSE", responseTime, "Response time of DroneSubsystem (ms)");
        }
        catch (IOException e){
            e.printStackTrace();
        }
+
         return receivePacket;
     }
 
@@ -225,6 +233,8 @@ public class DroneSubsystem implements Runnable {
         // Calculate the distance to the center
         double distance = Math.sqrt(Math.pow(centerX - droneX, 2) + Math.pow(centerY - droneY, 2));
 
+        MetricsLogger.logEvent("DRONE " + this.droneID, "DRONE_TRAVELS", Double.parseDouble(String.format("%.2f", distance)), "Required distance to reach target fire (m)");
+
         // Assume a fixed speed (units per second)
 
         // Calculate travel time in milliseconds
@@ -295,6 +305,9 @@ public class DroneSubsystem implements Runnable {
     }
 
     public static void main(String[] args) {
+        // Start logging daemon
+        MetricsLogger.startDaemon();
+
         // Initialize DroneSubsystems
         DroneSubsystem droneSubsystem1 = new DroneSubsystem(100);
         DroneSubsystem droneSubsystem2 = new DroneSubsystem(200);
