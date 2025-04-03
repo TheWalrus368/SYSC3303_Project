@@ -14,7 +14,7 @@ public class LogAnalyzer {
     private ArrayList<Double> fireTimes = new ArrayList<>();
     private Map<String, List<Double>> droneTimes = new HashMap<>();
     private Map<String, Double> extinguishedTimes = new HashMap<>();
-    private Map<String, Double> distanceTravelled = new HashMap<>();
+    private Map<String, List<Double>> distanceTravelled = new HashMap<>();
 
     /**
      * Reads the event log file and returns its contents as a list of log entries
@@ -56,9 +56,13 @@ public class LogAnalyzer {
 
             // collect distance required to reach target fire zone
             if (eventCode.equals("DRONE_TRAVELS")){
-                distanceTravelled.put(entity, value);
+                // if drone entity not captured yet, create map and its array list
+                distanceTravelled.putIfAbsent(entity, new ArrayList<>());
 
-            // collect response times of Scheduler
+                // append if drone entity already exists in map
+                distanceTravelled.get(entity).add(value);
+
+                // collect response times of Scheduler
             } else if (eventCode.equals("SCHEDULER_RESPONSE")){
                 schedulerTimes.add(value);
 
@@ -168,6 +172,15 @@ public class LogAnalyzer {
             writer.write("\nOverall Average Drone Response Time: " + Math.round(overallDroneResponseTime * 100.0) / 100.0 + " ms\n");
             writer.write("Average Scheduler Response Time: " + Math.round(avgSchedulerTime * 100.0) / 100.0 + " ms\n");
             writer.write("Average Fire Incident Response Time: " + Math.round(avgFireTime * 100.0) / 100.0 + " ms\n");
+
+            // write each drone's required distance to travel to target zone
+            writer.write("\nDistance Required for Each Drone to Travel to Target:\n");
+            writer.write("(where each index of distance array represents nth time the drone visits zone x)\n");
+            for (Map.Entry<String, List<Double>> entry: distanceTravelled.entrySet()){
+                String droneId = entry.getKey();
+                List<Double> distances = entry.getValue();
+                writer.write(droneId + ": " + distances + " m\n");
+            }
 
             writer.flush();
         } catch (IOException e){

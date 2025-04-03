@@ -1,74 +1,67 @@
-13:22:41.695, SCHEDULER, SCHEDULER_RESPONSE, 3.0, Response time of Scheduler (ms) [STATE: IDLE]
-13:22:41.695, SCHEDULER, SCHEDULER_RESPONSE, 3.0, Response time of Scheduler (ms) [STATE: IDLE]
-13:22:41.695, SCHEDULER, SCHEDULER_RESPONSE, 4.0, Response time of Scheduler (ms) [STATE: IDLE]
-13:22:41.696, SCHEDULER, SCHEDULER_RESPONSE, 5.0, Response time of Scheduler (ms) [STATE: IDLE]
-13:22:41.723, DRONE 400, DRONE_RESPONSE, 8.0, Response time of DroneSubsystem (ms)
-13:22:41.723, DRONE 200, DRONE_RESPONSE, 7.0, Response time of DroneSubsystem (ms)
-13:22:41.723, DRONE 100, DRONE_RESPONSE, 8.0, Response time of DroneSubsystem (ms)
-13:22:41.723, DRONE 300, DRONE_RESPONSE, 8.0, Response time of DroneSubsystem (ms)
-13:22:41.736, DRONE 200, DRONE_TRAVELS, 1099.15, Required distance to reach target fire (m)
-13:22:41.736, DRONE 300, DRONE_TRAVELS, 460.98, Required distance to reach target fire (m)
-13:22:41.736, DRONE 400, DRONE_TRAVELS, 460.98, Required distance to reach target fire (m)
-13:22:41.736, DRONE 100, DRONE_TRAVELS, 460.98, Required distance to reach target fire (m)
-13:22:43.291, DRONE 400, DRONE_TRAVELS, 460.98, Required distance to reach target fire (m)
-13:22:43.291, DRONE 100, DRONE_TRAVELS, 460.98, Required distance to reach target fire (m)
-13:22:43.294, SCHEDULER, SCHEDULER_RESPONSE, 2.0, Response time of Scheduler (ms) [STATE: FAULT]
-13:22:44.832, DRONE 400, DRONE_TRAVELS, 460.98, Required distance to reach target fire (m)
-13:22:44.833, DRONE 100, DRONE_TRAVELS, 460.98, Required distance to reach target fire (m)
-13:22:45.411, SCHEDULER, SCHEDULER_RESPONSE, 2.0, Response time of Scheduler (ms) [STATE: FAULT]
-13:22:46.378, SCHEDULER, SCHEDULER_RESPONSE, 3.0, Response time of Scheduler (ms) [STATE: COMPLETE]
-13:22:46.379, SCHEDULER, SCHEDULER_RESPONSE, 7393.0, Response time of Scheduler (ms) [STATE: CONFIRMATION]
-13:22:46.379, SCHEDULER, SCHEDULER_RESPONSE, 7394.0, Response time of Scheduler (ms) [STATE: CONFIRMATION]
-13:22:46.379, SCHEDULER, SCHEDULER_RESPONSE, 4.0, Response time of Scheduler (ms) [STATE: COMPLETE]
-13:22:46.511, FIRE 7, FIRE_EXTINGUISHED, 7395.0, Time taken to extinguish fire (ms)
-13:22:46.516, FIRE_INCIDENT_SUBSYSTEM, FIRE_RESPONSE, 7421.0, Response time of FireIncidentSubsystem (ms)
-13:22:46.511, FIRE 1, FIRE_EXTINGUISHED, 7394.0, Time taken to extinguish fire (ms)
-13:22:46.516, FIRE_INCIDENT_SUBSYSTEM, FIRE_RESPONSE, 7421.0, Response time of FireIncidentSubsystem (ms)
-13:22:46.379, DRONE 100, DRONE_RESPONSE, 5.0, Response time of DroneSubsystem (ms)
-13:22:46.379, DRONE 100, DRONE_TRAVELS, 460.98, Required distance to reach target fire (m)
-13:22:46.380, DRONE 400, DRONE_RESPONSE, 6.0, Response time of DroneSubsystem (ms)
-13:22:46.380, DRONE 400, DRONE_TRAVELS, 460.98, Required distance to reach target fire (m)
-13:22:47.924, SCHEDULER, SCHEDULER_RESPONSE, 1.0, Response time of Scheduler (ms) [STATE: IDLE]
-13:22:47.924, SCHEDULER, SCHEDULER_RESPONSE, 0.0, Response time of Scheduler (ms) [STATE: IDLE]
-13:22:47.924, DRONE 100, DRONE_RESPONSE, 1.0, Response time of DroneSubsystem (ms)
-13:22:47.925, DRONE 400, DRONE_RESPONSE, 2.0, Response time of DroneSubsystem (ms)
-13:22:47.927, DRONE 100, DRONE_TRAVELS, 1099.15, Required distance to reach target fire (m)
-13:22:47.928, DRONE 400, DRONE_TRAVELS, 460.98, Required distance to reach target fire (m)
-13:22:49.471, DRONE 400, DRONE_TRAVELS, 460.98, Required distance to reach target fire (m)
-13:22:51.012, DRONE 400, DRONE_TRAVELS, 460.98, Required distance to reach target fire (m)
-13:22:51.596, DRONE 100, DRONE_TRAVELS, 1099.15, Required distance to reach target fire (m)
-13:22:52.559, FIRE 4, FIRE_EXTINGUISHED, 13574.0, Time taken to extinguish fire (ms)
-13:22:52.559, FIRE_INCIDENT_SUBSYSTEM, FIRE_RESPONSE, 13599.0, Response time of FireIncidentSubsystem (ms)
-13:22:52.558, DRONE 400, DRONE_RESPONSE, 6.0, Response time of DroneSubsystem (ms)
-13:22:52.562, DRONE 400, DRONE_RESPONSE, 3.0, Response time of DroneSubsystem (ms)
-13:22:52.563, DRONE 400, DRONE_TRAVELS, 750.42, Required distance to reach target fire (m)
-13:22:52.558, SCHEDULER, SCHEDULER_RESPONSE, 3.0, Response time of Scheduler (ms) [STATE: COMPLETE]
-13:22:52.558, SCHEDULER, SCHEDULER_RESPONSE, 13573.0, Response time of Scheduler (ms) [STATE: CONFIRMATION]
-13:22:52.561, SCHEDULER, SCHEDULER_RESPONSE, 1.0, Response time of Scheduler (ms) [STATE: IDLE]
-13:22:55.070, DRONE 400, DRONE_TRAVELS, 1099.15, Required distance to reach target fire (m)
-13:22:55.264, DRONE 100, DRONE_TRAVELS, 1099.15, Required distance to reach target fire (m)
-13:22:58.942, FIRE 2, FIRE_EXTINGUISHED, 19958.0, Time taken to extinguish fire (ms)
-13:22:58.944, FIRE_INCIDENT_SUBSYSTEM, FIRE_RESPONSE, 19984.0, Response time of FireIncidentSubsystem (ms)
-13:22:58.953, FIRE 5, FIRE_EXTINGUISHED, 19967.0, Time taken to extinguish fire (ms)
-13:22:58.953, FIRE_INCIDENT_SUBSYSTEM, FIRE_RESPONSE, 19993.0, Response time of FireIncidentSubsystem (ms)
-13:22:58.737, DRONE 400, DRONE_TRAVELS, 1099.15, Required distance to reach target fire (m)
-13:22:58.942, DRONE 100, DRONE_RESPONSE, 5.0, Response time of DroneSubsystem (ms)
-13:22:58.946, DRONE 100, DRONE_RESPONSE, 3.0, Response time of DroneSubsystem (ms)
-13:22:58.950, DRONE 100, DRONE_RESPONSE, 2.0, Response time of DroneSubsystem (ms)
-13:22:58.951, DRONE 100, DRONE_TRAVELS, 1099.15, Required distance to reach target fire (m)
-13:22:58.942, SCHEDULER, SCHEDULER_RESPONSE, 3.0, Response time of Scheduler (ms) [STATE: COMPLETE]
-13:22:58.942, SCHEDULER, SCHEDULER_RESPONSE, 19957.0, Response time of Scheduler (ms) [STATE: CONFIRMATION]
-13:22:58.946, SCHEDULER, SCHEDULER_RESPONSE, 1.0, Response time of Scheduler (ms) [STATE: IDLE]
-13:22:58.949, SCHEDULER, SCHEDULER_RESPONSE, 1.0, Response time of Scheduler (ms) [STATE: COMPLETE]
-13:22:58.950, SCHEDULER, SCHEDULER_RESPONSE, 19965.0, Response time of Scheduler (ms) [STATE: CONFIRMATION]
-13:23:02.408, SCHEDULER, SCHEDULER_RESPONSE, 1.0, Response time of Scheduler (ms) [STATE: COMPLETE]
-13:23:02.409, SCHEDULER, SCHEDULER_RESPONSE, 23423.0, Response time of Scheduler (ms) [STATE: CONFIRMATION]
-13:23:02.437, SCHEDULER, SCHEDULER_RESPONSE, 23.0, Response time of Scheduler (ms) [STATE: IDLE]
-13:23:02.411, FIRE 6, FIRE_EXTINGUISHED, 23427.0, Time taken to extinguish fire (ms)
-13:23:02.411, FIRE_INCIDENT_SUBSYSTEM, FIRE_RESPONSE, 23452.0, Response time of FireIncidentSubsystem (ms)
-13:23:02.411, DRONE 400, DRONE_RESPONSE, 7.0, Response time of DroneSubsystem (ms)
-13:23:02.621, DRONE 100, DRONE_RESPONSE, 1.0, Response time of DroneSubsystem (ms)
-13:23:02.622, DRONE 100, DRONE_TRAVELS, 1099.15, Required distance to reach target fire (m)
-13:23:06.297, SCHEDULER, SCHEDULER_RESPONSE, 4.0, Response time of Scheduler (ms) [STATE: COMPLETE]
-13:23:06.297, SCHEDULER, SCHEDULER_RESPONSE, 27312.0, Response time of Scheduler (ms) [STATE: CONFIRMATION]
-13:23:06.298, DRONE 100, DRONE_RESPONSE, 6.0, Response time of DroneSubsystem (ms)
+17:38:42.426, SCHEDULER, SCHEDULER_RESPONSE, 3.0, Response time of Scheduler (ms) [STATE: IDLE]
+17:38:42.427, SCHEDULER, SCHEDULER_RESPONSE, 4.0, Response time of Scheduler (ms) [STATE: IDLE]
+17:38:42.427, SCHEDULER, SCHEDULER_RESPONSE, 4.0, Response time of Scheduler (ms) [STATE: IDLE]
+17:38:42.427, SCHEDULER, SCHEDULER_RESPONSE, 4.0, Response time of Scheduler (ms) [STATE: IDLE]
+17:38:42.455, DRONE 100, DRONE_RESPONSE, 8.0, Response time of DroneSubsystem (ms)
+17:38:42.455, DRONE 300, DRONE_RESPONSE, 8.0, Response time of DroneSubsystem (ms)
+17:38:42.455, DRONE 200, DRONE_RESPONSE, 8.0, Response time of DroneSubsystem (ms)
+17:38:42.455, DRONE 400, DRONE_RESPONSE, 8.0, Response time of DroneSubsystem (ms)
+17:38:42.468, [DRONE 100 -> ZONE 1], DRONE_TRAVELS, 460.98, Required distance to reach target fire (m)
+17:38:42.468, [DRONE 300 -> ZONE 1], DRONE_TRAVELS, 460.98, Required distance to reach target fire (m)
+17:38:42.469, [DRONE 200 -> ZONE 1], DRONE_TRAVELS, 460.98, Required distance to reach target fire (m)
+17:38:42.469, [DRONE 400 -> ZONE 2], DRONE_TRAVELS, 1099.15, Required distance to reach target fire (m)
+17:38:44.790, [DRONE 100 -> ZONE 0], DRONE_TRAVELS, 460.98, Required distance to reach target fire (m)
+17:38:44.790, [DRONE 200 -> ZONE 0], DRONE_TRAVELS, 460.98, Required distance to reach target fire (m)
+17:38:44.791, [DRONE 300 -> ZONE 0], DRONE_TRAVELS, 460.98, Required distance to reach target fire (m)
+17:38:47.102, [DRONE 300 -> ZONE 1], DRONE_TRAVELS, 460.98, Required distance to reach target fire (m)
+17:38:47.101, [DRONE 100 -> ZONE 1], DRONE_TRAVELS, 460.98, Required distance to reach target fire (m)
+17:38:47.102, [DRONE 200 -> ZONE 1], DRONE_TRAVELS, 460.98, Required distance to reach target fire (m)
+17:38:47.973, [DRONE 400 -> ZONE 0], DRONE_TRAVELS, 1099.15, Required distance to reach target fire (m)
+17:38:49.432, DRONE 100, DRONE_RESPONSE, 10.0, Response time of DroneSubsystem (ms)
+17:38:49.437, DRONE 200, DRONE_RESPONSE, 15.0, Response time of DroneSubsystem (ms)
+17:38:49.437, DRONE 300, DRONE_RESPONSE, 16.0, Response time of DroneSubsystem (ms)
+17:38:49.437, [DRONE 200 -> ZONE 0], DRONE_TRAVELS, 460.98, Required distance to reach target fire (m)
+17:38:49.437, [DRONE 300 -> ZONE 0], DRONE_TRAVELS, 460.98, Required distance to reach target fire (m)
+17:38:49.481, FIRE 7, FIRE_EXTINGUISHED, 8913.0, Time taken to extinguish fire (ms)
+17:38:49.481, FIRE 1, FIRE_EXTINGUISHED, 8914.0, Time taken to extinguish fire (ms)
+17:38:49.481, FIRE 4, FIRE_EXTINGUISHED, 8916.0, Time taken to extinguish fire (ms)
+17:38:49.485, FIRE_INCIDENT_SUBSYSTEM, FIRE_RESPONSE, 8947.0, Response time of FireIncidentSubsystem (ms)
+17:38:49.485, FIRE_INCIDENT_SUBSYSTEM, FIRE_RESPONSE, 8949.0, Response time of FireIncidentSubsystem (ms)
+17:38:49.485, FIRE_INCIDENT_SUBSYSTEM, FIRE_RESPONSE, 8951.0, Response time of FireIncidentSubsystem (ms)
+17:38:49.431, SCHEDULER, SCHEDULER_RESPONSE, 8.0, Response time of Scheduler (ms) [STATE: COMPLETE]
+17:38:49.431, SCHEDULER, SCHEDULER_RESPONSE, 8908.0, Response time of Scheduler (ms) [STATE: CONFIRMATION]
+17:38:49.436, SCHEDULER, SCHEDULER_RESPONSE, 8912.0, Response time of Scheduler (ms) [STATE: CONFIRMATION]
+17:38:49.436, SCHEDULER, SCHEDULER_RESPONSE, 14.0, Response time of Scheduler (ms) [STATE: COMPLETE]
+17:38:49.436, SCHEDULER, SCHEDULER_RESPONSE, 13.0, Response time of Scheduler (ms) [STATE: COMPLETE]
+17:38:49.437, SCHEDULER, SCHEDULER_RESPONSE, 8913.0, Response time of Scheduler (ms) [STATE: CONFIRMATION]
+17:38:49.438, SCHEDULER, SCHEDULER_RESPONSE, 3.0, Response time of Scheduler (ms) [STATE: IDLE]
+17:38:51.747, DRONE 300, DRONE_RESPONSE, 1.0, Response time of DroneSubsystem (ms)
+17:38:51.749, [DRONE 300 -> ZONE 2], DRONE_TRAVELS, 1099.15, Required distance to reach target fire (m)
+17:38:51.751, DRONE 200, DRONE_RESPONSE, 4.0, Response time of DroneSubsystem (ms)
+17:38:51.752, [DRONE 200 -> ZONE 2], DRONE_TRAVELS, 1099.15, Required distance to reach target fire (m)
+17:38:51.754, DRONE 100, DRONE_RESPONSE, 2320.0, Response time of DroneSubsystem (ms)
+17:38:51.755, [DRONE 100 -> ZONE 2], DRONE_TRAVELS, 750.42, Required distance to reach target fire (m)
+17:38:51.750, SCHEDULER, SCHEDULER_RESPONSE, 1.0, Response time of Scheduler (ms) [STATE: IDLE]
+17:38:51.753, SCHEDULER, SCHEDULER_RESPONSE, 1.0, Response time of Scheduler (ms) [STATE: IDLE]
+17:38:53.471, [DRONE 400 -> ZONE 2], DRONE_TRAVELS, 1099.15, Required distance to reach target fire (m)
+17:38:55.521, DRONE 100, DRONE_RESPONSE, 9.0, Response time of DroneSubsystem (ms)
+17:38:55.522, [DRONE 100 -> ZONE 0], DRONE_TRAVELS, 1099.15, Required distance to reach target fire (m)
+17:38:55.520, FIRE 3, FIRE_EXTINGUISHED, 14998.0, Time taken to extinguish fire (ms)
+17:38:55.521, FIRE_INCIDENT_SUBSYSTEM, FIRE_RESPONSE, 15033.0, Response time of FireIncidentSubsystem (ms)
+17:38:55.519, SCHEDULER, SCHEDULER_RESPONSE, 14996.0, Response time of Scheduler (ms) [STATE: CONFIRMATION]
+17:38:55.519, SCHEDULER, SCHEDULER_RESPONSE, 6.0, Response time of Scheduler (ms) [STATE: COMPLETE]
+17:38:57.246, [DRONE 300 -> ZONE 0], DRONE_TRAVELS, 1099.15, Required distance to reach target fire (m)
+17:38:57.257, DRONE 200, DRONE_RESPONSE, 4.0, Response time of DroneSubsystem (ms)
+17:38:57.257, FIRE 5, FIRE_EXTINGUISHED, 16734.0, Time taken to extinguish fire (ms)
+17:38:57.257, FIRE_INCIDENT_SUBSYSTEM, FIRE_RESPONSE, 16768.0, Response time of FireIncidentSubsystem (ms)
+17:38:57.256, SCHEDULER, SCHEDULER_RESPONSE, 1.0, Response time of Scheduler (ms) [STATE: COMPLETE]
+17:38:57.256, SCHEDULER, SCHEDULER_RESPONSE, 16733.0, Response time of Scheduler (ms) [STATE: CONFIRMATION]
+17:38:58.972, SCHEDULER, SCHEDULER_RESPONSE, 1.0, Response time of Scheduler (ms) [STATE: COMPLETE]
+17:38:58.972, SCHEDULER, SCHEDULER_RESPONSE, 18449.0, Response time of Scheduler (ms) [STATE: CONFIRMATION]
+17:38:58.972, DRONE 400, DRONE_RESPONSE, 2.0, Response time of DroneSubsystem (ms)
+17:38:58.973, FIRE 6, FIRE_EXTINGUISHED, 18450.0, Time taken to extinguish fire (ms)
+17:38:58.973, FIRE_INCIDENT_SUBSYSTEM, FIRE_RESPONSE, 18484.0, Response time of FireIncidentSubsystem (ms)
+17:39:02.747, [DRONE 300 -> ZONE 2], DRONE_TRAVELS, 1099.15, Required distance to reach target fire (m)
+17:39:08.256, DRONE 300, DRONE_RESPONSE, 4.0, Response time of DroneSubsystem (ms)
+17:39:08.255, SCHEDULER, SCHEDULER_RESPONSE, 3.0, Response time of Scheduler (ms) [STATE: COMPLETE]
+17:39:08.256, SCHEDULER, SCHEDULER_RESPONSE, 27732.0, Response time of Scheduler (ms) [STATE: CONFIRMATION]

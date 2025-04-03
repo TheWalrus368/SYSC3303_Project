@@ -1,19 +1,33 @@
 -------PERFORMANCE METRICS -------
 Time to Extinguish Each Fire Incident:
-FIRE 6: 23427.0 ms
-FIRE 7: 7395.0 ms
-FIRE 4: 13574.0 ms
-FIRE 5: 19967.0 ms
-FIRE 2: 19958.0 ms
-FIRE 1: 7394.0 ms
-Total Extinguishing Time: 91715.0 ms
+FIRE 6: 18450.0 ms
+FIRE 7: 8913.0 ms
+FIRE 4: 8916.0 ms
+FIRE 5: 16734.0 ms
+FIRE 3: 14998.0 ms
+FIRE 1: 8914.0 ms
+Total Extinguishing Time: 76925.0 ms
 
 Drone Response Times:
-DRONE 400: 5.33 ms
-DRONE 300: 8.0 ms
-DRONE 200: 7.0 ms
-DRONE 100: 3.57 ms
+DRONE 400: 5.0 ms
+DRONE 300: 8.33 ms
+DRONE 200: 7.75 ms
+DRONE 100: 586.75 ms
 
-Overall Average Drone Response Time: 5.98 ms
-Average Scheduler Response Time: 3989.78 ms
-Average Fire Incident Response Time: 15311.67 ms
+Overall Average Drone Response Time: 151.96 ms
+Average Scheduler Response Time: 4051.26 ms
+Average Fire Incident Response Time: 12855.33 ms
+
+Distance Required for Each Drone to Travel to Target:
+(where each index of distance array represents nth time the drone visits zone x)
+[DRONE 400 -> ZONE 0]: [1099.15] m
+[DRONE 300 -> ZONE 1]: [460.98, 460.98] m
+[DRONE 300 -> ZONE 2]: [1099.15, 1099.15] m
+[DRONE 300 -> ZONE 0]: [460.98, 460.98, 1099.15] m
+[DRONE 100 -> ZONE 2]: [750.42] m
+[DRONE 100 -> ZONE 1]: [460.98, 460.98] m
+[DRONE 200 -> ZONE 2]: [1099.15] m
+[DRONE 200 -> ZONE 1]: [460.98, 460.98] m
+[DRONE 200 -> ZONE 0]: [460.98, 460.98] m
+[DRONE 400 -> ZONE 2]: [1099.15, 1099.15] m
+[DRONE 100 -> ZONE 0]: [460.98, 1099.15] m
