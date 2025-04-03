@@ -74,6 +74,7 @@ class Scheduler implements Runnable{
      */
     private void RCP_Receive(DatagramPacket requestPacket){
         try{
+            double startTime = System.currentTimeMillis();
             int port;
             int fireID;
             // Step 2: Parse what they want
@@ -189,6 +190,9 @@ class Scheduler implements Runnable{
                     System.out.println(this + " SOMETHING WENT WRONG!!!");
                     break;
             }
+            double endTime = System.currentTimeMillis();
+            double responseTime = (endTime - startTime);
+            MetricsLogger.logEvent("SCHEDULER", "SCHEDULER_RESPONSE", responseTime, "Response time of Scheduler (ms) [STATE: " + eventStatus.getCommand() + "]");
         } catch(IOException e){
             e.printStackTrace();
         }
@@ -389,6 +393,9 @@ class Scheduler implements Runnable{
     }
 
     public static void main(String[] args) {
+        // Start logging daemon
+        MetricsLogger.startDaemon();
+
         // Initialize the Scheduler, responsible for managing communication between subsystems
         Scheduler scheduler = new Scheduler();
 

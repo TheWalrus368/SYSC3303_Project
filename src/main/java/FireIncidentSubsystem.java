@@ -5,6 +5,8 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * FireIncidentSubsystem is responsible for reading fire incident data from a CSV file
@@ -15,6 +17,7 @@ public class FireIncidentSubsystem implements Runnable {
     private final int SCHEDULER_PORT = 7000;
     private int nextFireID = 1;
     private static final int PORT = 8000;
+    private final List<Thread> rpcThreads = new ArrayList<>();
 
     /**
      * Constructor to initialize the FireIncidentSubsystem with a CSV file path and a Scheduler.
@@ -44,7 +47,13 @@ public class FireIncidentSubsystem implements Runnable {
                 DatagramPacket replyPacket = new DatagramPacket(replyBuffer, replyBuffer.length);
 
                 // Create and start a new thread for each RPC send
-                new Thread(() -> rpc_send(dataPacket, replyPacket, fireEvent)).start();
+                //new Thread(() -> rpc_send(dataPacket, replyPacket, fireEvent)).start();
+
+                Thread rpcThread = new Thread(() -> rpc_send(dataPacket, replyPacket, fireEvent));
+                rpcThreads.add(rpcThread);
+                rpcThread.start();
+
+
             }
         } catch (IOException e) {
             System.out.println(e);
@@ -78,6 +87,7 @@ public class FireIncidentSubsystem implements Runnable {
      */
     private void rpc_send(DatagramPacket dataPacket, DatagramPacket replyPacket, FireEvent fireEvent) {
         try {
+            double startResponseTime = System.currentTimeMillis();
             int fireID = fireEvent.getFireID();
             int port = PORT + fireID;
             DatagramSocket sendReceiveSocket = new DatagramSocket(port);
@@ -99,12 +109,22 @@ public class FireIncidentSubsystem implements Runnable {
             byte[] requestBuffer = request.getBytes();
 
             // Datagram packet to send request
+            double startExtinguishTime = System.currentTimeMillis(); // start time to extinguish fire
             DatagramPacket requestPacket = new DatagramPacket(requestBuffer, requestBuffer.length, InetAddress.getLocalHost(), SCHEDULER_PORT);
             sendReceiveSocket.send(requestPacket);
 
             // STEP 4: Wait to receive the server's response passed back through the host
             sendReceiveSocket.receive(replyPacket);
             String reply = new String(replyPacket.getData(), 0, replyPacket.getLength());
+            double endTime = System.currentTimeMillis(); // end time of extinguished fire and response time
+            double extinguishedTime = endTime - startExtinguishTime;
+            double responseTime = endTime - startResponseTime;
+
+            // record specific fire
+            MetricsLogger.logEvent("FIRE " + fireID, "FIRE_EXTINGUISHED", extinguishedTime,"Time taken to extinguish fire (ms)");
+
+            // record FireIncidentSubsystem's response time
+            MetricsLogger.logEvent("FIRE_INCIDENT_SUBSYSTEM", "FIRE_RESPONSE", responseTime, "Response time of FireIncidentSubsystem (ms)");
             System.out.println("[Drone -> Scheduler -> FireIncidentSubsystem] Got Drone Reply [FIRE " + fireID + "]: " + reply);
 
         } catch (IOException e) {
@@ -112,7 +132,14 @@ public class FireIncidentSubsystem implements Runnable {
         }
     }
 
+    public List<Thread> getRPCThreads(){
+        return rpcThreads;
+    }
+
     public static void main(String[] args) {
+        // Start logging daemon
+        MetricsLogger.startDaemon();
+
         // CSV file path containing fire event data
         String csvFilePath = "src/main/java/fire_events.csv";
 
@@ -122,6 +149,20 @@ public class FireIncidentSubsystem implements Runnable {
         // Start Thread
         Thread fireIncidentThread = new Thread(fireIncidentSubsystem, "FIRE");
         fireIncidentThread.start();
+
+        // wait for all threads to end to analyze metrics
+        try {
+            fireIncidentThread.join();
+            for (Thread rpcThread: fireIncidentSubsystem.getRPCThreads()){
+                rpcThread.join();
+            }
+
+        } catch(InterruptedException e){
+            e.printStackTrace();
+        }
+
+        LogAnalyzer analyzer = new LogAnalyzer();
+        analyzer.analyzeMetrics();
 
     }
 
