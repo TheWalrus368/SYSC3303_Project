@@ -125,7 +125,7 @@ public class FireIncidentSubsystem implements Runnable {
 
             // record FireIncidentSubsystem's response time
             MetricsLogger.logEvent("FIRE_INCIDENT_SUBSYSTEM", "FIRE_RESPONSE", responseTime, "Response time of FireIncidentSubsystem (ms)");
-            System.out.println("[Drone -> Scheduler -> FireIncidentSubsystem] Got Drone Reply [FIRE " + fireID + "]: " + reply);
+            Print.green("[Drone -> Scheduler -> FireIncidentSubsystem] Got Drone Reply [FIRE " + fireID + "]: " + reply);
 
         } catch (IOException e) {
             e.printStackTrace();

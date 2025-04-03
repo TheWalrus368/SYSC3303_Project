@@ -23,17 +23,17 @@ class Idle implements DroneState {
         if (drone.isAgentEmpty()){
             context.setState("REFILLING");
         }
-
-
+        
         else if (drone.getCurrentFireEvent() != null){
             context.setState("EN_ROUTE");
         }
         else {
             FireEvent fireEvent = context.getDrone().fetchFireTask();
-            if (fireEvent.toString().contains("HANDOFF")) {
-                System.out.println(drone + " Picking up previously faulted fire: " + drone.getCurrentFireEvent() + ".");
-            }
             if (fireEvent != null) {
+                if (fireEvent.toString().contains("HANDOFF")) {
+                    Print.yellow(drone + " Picking up previously faulted fire: " + drone.getCurrentFireEvent() + ".");
+                }
+
                 System.out.println(drone + " Extinguishing Starting for:  " + drone.getCurrentFireEvent() + ". " +
                         drone.getCurrentFireEvent().getRemainingWaterNeeded() + "L remaining to extinguish.");
                 context.setState("EN_ROUTE");
@@ -41,6 +41,7 @@ class Idle implements DroneState {
         }
     }
 }
+
 /**
  * State representing the drone travelling to the fire incident location.
  */
@@ -61,7 +62,7 @@ class DroppingAgent implements DroneState {
     public void handle(DroneStateMachine context){
         // Handle faults
         if (context.getDrone().getCurrentFireEvent().getFailureFlag()){
-            System.out.println("FAULTED: " + context.getDrone().toString());
+            Print.red("FAULTED: " + context.getDrone().toString());
             context.setState("FAULTED");
             return;
         }

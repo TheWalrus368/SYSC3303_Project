@@ -79,7 +79,12 @@ public class DroneSubsystem implements Runnable {
 
            // STEP 1: Send a request to scheduler for any new fires / register to drone to the schedulers knowledge
            String sendData            = new String(requestPacket.getData(), 0, requestPacket.getLength());
-           System.out.println("[Drone -> Scheduler]" + this + " Sending Drone request: " + sendData);
+           if (sendData.contains("FAULTED")) {
+               Print.red("[Drone -> Scheduler]" + this + " Sending Drone request: " + sendData);
+           } else {
+               System.out.println("[Drone -> Scheduler]" + this + " Sending Drone request: " + sendData);
+           }
+
            sendSocket.send(requestPacket);
 
            // STEP 2: Wait to receive reply from host with new data
@@ -185,7 +190,12 @@ public class DroneSubsystem implements Runnable {
 
             // Handle the client request and send ack back to Scheduler
             String data = new String(dataPacket.getData(), 0, dataPacket.getLength());
-            System.out.println(this + " Received: " + data + " from Scheduler(" + dataPacket.getAddress() + ":" + dataPacket.getPort() + ")");
+
+            if (this.stateMachine.getState().equalsIgnoreCase("COMPLETE")){
+                Print.green(this + " Received: " + data + " from Scheduler(" + dataPacket.getAddress() + ":" + dataPacket.getPort() + ")");
+            } else {
+                System.out.println(this + " Received: " + data + " from Scheduler(" + dataPacket.getAddress() + ":" + dataPacket.getPort() + ")");
+            }
         } catch (UnknownHostException e) {
             throw new RuntimeException(e);
         }

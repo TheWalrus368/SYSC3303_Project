@@ -99,7 +99,7 @@ class Scheduler implements Runnable{
                     }
 
                     if (fireRequest.contains("HANDOFF")) {
-                        System.out.println(this + " Previously faulted fire" + " HANDOFF to [DRONE " + selectedDrone.getDroneID() + "]");
+                        Print.yellow(this + " Previously faulted fire" + " HANDOFF to [DRONE " + selectedDrone.getDroneID() + "]");
                         //TODO: fireRequest parse for id after fire: fireRequest.getID();
                     }
 
@@ -148,7 +148,7 @@ class Scheduler implements Runnable{
                             acknowledgmentBuffer.length,
                             InetAddress.getLocalHost(),
                             requestPacket.getPort());
-                    System.out.println(this + "[Scheduler -> FireIncidentSubsystem] Sent acknowledgement: " + acknowledgment + " to " + InetAddress.getLocalHost() + ":" + requestPacket.getPort());
+                    Print.green(this + "[Scheduler -> FireIncidentSubsystem] Sent acknowledgement: " + acknowledgment + " to " + InetAddress.getLocalHost() + ":" + requestPacket.getPort());
                     sendSocket.send(acknowledgementPacket);
                     break;
 
@@ -172,14 +172,14 @@ class Scheduler implements Runnable{
                             confirmReply.length,
                             InetAddress.getLocalHost(),
                             requestPacket.getPort());
-                    System.out.println(this + "[Scheduler -> FireIncidentSubsystem] Fire: " + fireID + " is out: " + confirmation);
+                    Print.green(this + "[Scheduler -> FireIncidentSubsystem] Fire: " + fireID + " is out: " + confirmation);
                     sendSocket.send(droneAcknowledgementPacket);
 
                     break;
                 case "FAULT":
                     System.out.println("[Scheduler <- Drone] " + requestData);
                     String unfaultedFireEvent = extractFireEvent(requestData).replace("FAULT", "HANDOFF");
-                    System.out.println("[Scheduler] Adding fire back to list " + unfaultedFireEvent);
+                    Print.yellow("[Scheduler] Adding fire back to list " + unfaultedFireEvent);
 
                     // Reset the fire to no trigger a fault for the next drone
                     this.addSortFires("NEW FIRE: "+ unfaultedFireEvent);
@@ -193,9 +193,7 @@ class Scheduler implements Runnable{
             double endTime = System.currentTimeMillis();
             double responseTime = (endTime - startTime);
             MetricsLogger.logEvent("SCHEDULER", "SCHEDULER_RESPONSE", responseTime, "Response time of Scheduler (ms) [STATE: " + eventStatus.getCommand() + "]");
-        } catch(IOException e){
-            e.printStackTrace();
-        }
+        } catch(IOException ignored) { }
     }
 
 /**
