@@ -97,6 +97,11 @@ class Scheduler implements Runnable{
                         selectedDrone = getAvailableDrone();
                     }
 
+                    if (fireRequest.contains("HANDOFF")) {
+                        System.out.println(this + " Previously faulted fire" + " HANDOFF to [DRONE " + selectedDrone.getDroneID() + "]");
+                        //TODO: fireRequest parse for id after fire: fireRequest.getID();
+                    }
+
                     // Create a packet sending the drone the fire to extinguish
                     DatagramPacket assignDroneFirePacket = new DatagramPacket(fireRequestBuffer,
                                                                     fireRequestBuffer.length,
@@ -172,7 +177,7 @@ class Scheduler implements Runnable{
                     break;
                 case "FAULT":
                     System.out.println("[Scheduler <- Drone] " + requestData);
-                    String unfaultedFireEvent = extractFireEvent(requestData).replace("FAULT", "NONE");
+                    String unfaultedFireEvent = extractFireEvent(requestData).replace("FAULT", "HANDOFF");
                     System.out.println("[Scheduler] Adding fire back to list " + unfaultedFireEvent);
 
                     // Reset the fire to no trigger a fault for the next drone

@@ -23,11 +23,16 @@ class Idle implements DroneState {
         if (drone.isAgentEmpty()){
             context.setState("REFILLING");
         }
+
+
         else if (drone.getCurrentFireEvent() != null){
             context.setState("EN_ROUTE");
         }
         else {
             FireEvent fireEvent = context.getDrone().fetchFireTask();
+            if (fireEvent.toString().contains("HANDOFF")) {
+                System.out.println(drone + " Picking up previously faulted fire: " + drone.getCurrentFireEvent() + ".");
+            }
             if (fireEvent != null) {
                 System.out.println(drone + " Extinguishing Starting for:  " + drone.getCurrentFireEvent() + ". " +
                         drone.getCurrentFireEvent().getRemainingWaterNeeded() + "L remaining to extinguish.");
