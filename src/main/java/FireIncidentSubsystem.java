@@ -5,6 +5,8 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * FireIncidentSubsystem is responsible for reading fire incident data from a CSV file
@@ -15,6 +17,7 @@ public class FireIncidentSubsystem implements Runnable {
     private final int SCHEDULER_PORT = 7000;
     private int nextFireID = 1;
     private static final int PORT = 8000;
+    private final List<Thread> rpcThreads = new ArrayList<>();
 
     /**
      * Constructor to initialize the FireIncidentSubsystem with a CSV file path and a Scheduler.
@@ -44,7 +47,13 @@ public class FireIncidentSubsystem implements Runnable {
                 DatagramPacket replyPacket = new DatagramPacket(replyBuffer, replyBuffer.length);
 
                 // Create and start a new thread for each RPC send
-                new Thread(() -> rpc_send(dataPacket, replyPacket, fireEvent)).start();
+                //new Thread(() -> rpc_send(dataPacket, replyPacket, fireEvent)).start();
+
+                Thread rpcThread = new Thread(() -> rpc_send(dataPacket, replyPacket, fireEvent));
+                rpcThreads.add(rpcThread);
+                rpcThread.start();
+
+
             }
         } catch (IOException e) {
             System.out.println(e);
@@ -123,6 +132,10 @@ public class FireIncidentSubsystem implements Runnable {
         }
     }
 
+    public List<Thread> getRPCThreads(){
+        return rpcThreads;
+    }
+
     public static void main(String[] args) {
         // Start logging daemon
         MetricsLogger.startDaemon();
@@ -137,8 +150,13 @@ public class FireIncidentSubsystem implements Runnable {
         Thread fireIncidentThread = new Thread(fireIncidentSubsystem, "FIRE");
         fireIncidentThread.start();
 
+        // wait for all threads to end to analyze metrics
         try {
-            fireIncidentThread.join(); // wait for thread to end to print metrics
+            fireIncidentThread.join();
+            for (Thread rpcThread: fireIncidentSubsystem.getRPCThreads()){
+                rpcThread.join();
+            }
+
         } catch(InterruptedException e){
             e.printStackTrace();
         }

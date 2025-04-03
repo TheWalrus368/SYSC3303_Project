@@ -6,9 +6,8 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * The MetricsLogger class is responsible for logging events to a file and console.
- * It maintains a queue of log messages and writes them to a file periodically using
- * a daemon thread
+ * The MetricsLogger class is responsible for logging events to a file. It maintains a queue of
+ * log messages and writes them to a file periodically using a daemon thread
  */
 public class MetricsLogger {
 
@@ -46,7 +45,7 @@ public class MetricsLogger {
      * Logs an event by adding it to the queue and printing it to the console
      * @param entity The thread/shared resource creating the event
      * @param eventCode The identifier describing the event
-     * @param value accepts either Long or Double type to account for time or distance values
+     * @param value The metric value
      * @param details Additional details about the event
      */
     public static void logEvent(String entity, String eventCode, double value, String details){

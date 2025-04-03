@@ -50,7 +50,6 @@ public class LogAnalyzer {
         for (String log: logs){
             String[] parts = log.split(",");
 
-            double timestamp = Double.parseDouble(parts[0].trim().split(":")[2]);
             String entity = parts[1].trim();
             String eventCode = parts[2].trim();
             double value = Double.parseDouble(parts[3].trim());
@@ -133,10 +132,10 @@ public class LogAnalyzer {
             writer.write("-------PERFORMANCE METRICS -------\n");
 
             // write each extinguished time
-            writer.write("Extinguished Times for each Fire Incident:\n");
+            writer.write("Time to Extinguish Each Fire Incident:\n");
             for (Map.Entry<String, Double> entry : extinguishedTimes.entrySet()) {
                 String entity = entry.getKey();
-                double extinguishedTime = entry.getValue();
+                double extinguishedTime = Math.round(entry.getValue() * 100.0) / 100.0;
                 writer.write(entity + ": " + extinguishedTime + " ms\n");
             }
 
@@ -146,28 +145,17 @@ public class LogAnalyzer {
             writer.write("\nDrone Response Times:\n");
             for (Map.Entry<String, Double> entry : avgDroneTimes.entrySet()) {
                 String droneId = entry.getKey();
-                double avgTime = entry.getValue();
-                writer.write("Drone " + droneId + ": " + avgTime + " ms\n");
+                double avgTime = Math.round(entry.getValue() * 100.0) / 100.0;
+                writer.write(droneId + ": " + avgTime + " ms\n");
             }
 
-            writer.write("\nOverall Average Drone Response Time: " + overallDroneResponseTime + " ms\n");
-            writer.write("Average Scheduler Response Time: " + avgSchedulerTime + " ms\n");
-            writer.write("Average Fire Incident Response Time: " + avgFireTime + " ms\n");
+            writer.write("\nOverall Average Drone Response Time: " + Math.round(overallDroneResponseTime * 100.0) / 100.0 + " ms\n");
+            writer.write("Average Scheduler Response Time: " + Math.round(avgSchedulerTime * 100.0) / 100.0 + " ms\n");
+            writer.write("Average Fire Incident Response Time: " + Math.round(avgFireTime * 100.0) / 100.0 + " ms\n");
 
             writer.flush();
         } catch (IOException e){
             System.err.println("Error writing logs: " + e.getMessage());
         }
-
-    }
-
-
-    /**
-     * Prints the calculated metrics
-     */
-    public void printMetrics(){
-        List<String> logs = readLogsFromFile();
-        System.out.println("----PERFORMANCE METRICS ------");
-        System.out.println("LOGS: " + logs); // for testing purposes
     }
 }
