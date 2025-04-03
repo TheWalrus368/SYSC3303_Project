@@ -1,5 +1,6 @@
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -8,7 +9,7 @@ import java.util.Map;
 
 public class LogAnalyzer {
     private static final String LOG_FILE = "src/main/java/event-log.txt";
-    private Map<String, Double> responseTimes = new HashMap<>();
+    private static final String METRICS_FILE = "src/main/java/metrics-log.txt";
     private ArrayList<Double> schedulerTimes = new ArrayList<>();
     private ArrayList<Double> fireTimes = new ArrayList<>();
     private Map<String, List<Double>> droneTimes = new HashMap<>();
@@ -40,7 +41,8 @@ public class LogAnalyzer {
     public void analyzeMetrics() {
         List<String> logs = readLogsFromFile();
         // clear previous data
-        responseTimes.clear();
+        schedulerTimes.clear();
+        fireTimes.clear();
         extinguishedTimes.clear();
         distanceTravelled.clear();
         droneTimes.clear();
@@ -78,6 +80,7 @@ public class LogAnalyzer {
                 extinguishedTimes.put(entity, value);
             }
         }
+        calculateMetrics();
     }
 
     private void calculateMetrics(){
@@ -112,29 +115,49 @@ public class LogAnalyzer {
                 .average()
                 .orElse(0);
 
-        /** PUTTING THIS HERE FOR NOW SO I CAN MOVE IT TO printMetrics() ONCE LOGIC IS COMPLETE */
-        System.out.println("----ACTUAL PERFORMANCE METRICS ------");
-        System.out.println("Total Extinguishing Time: " + totalExtinguishedTime + " ms");
+        writeMetricsLog(totalExtinguishedTime, avgDroneTimes, overallDroneResponseTime, avgSchedulerTime, avgFireTime);
 
-        // output each extinguished time
-        System.out.println("Extinguished Times for each Fire Incident:");
-        for (Map.Entry<String, Double> entry : extinguishedTimes.entrySet()) {
-            String entity = entry.getKey();
-            double extinguishedTime = entry.getValue();
-            System.out.println(entity + ": " + extinguishedTime + " ms");
+    }
+
+    private void writeMetricsLog(double totalExtinguishedTime, Map<String, Double> avgDroneTimes, double overallDroneResponseTime, double avgSchedulerTime, double avgFireTime){
+        // to overwrite the previous file entry
+        try (FileWriter writer = new FileWriter(METRICS_FILE, false)){
+            writer.write("");
+        } catch (IOException e){
+            System.err.println("Error overwriting file: " + e.getMessage());
         }
 
-        // output each drone's response time
-        System.out.println("\nDrone Response Times:");
-        for (Map.Entry<String, Double> entry : avgDroneTimes.entrySet()) {
-            String droneId = entry.getKey();
-            double avgTime = entry.getValue();
-            System.out.println("Drone " + droneId + ": " + avgTime + " ms");
-        }
+        // write calculated metrics into log
+        try(FileWriter writer = new FileWriter(METRICS_FILE, true)){
 
-        System.out.println("\nOverall Average Drone Response Time: " + overallDroneResponseTime + " ms");
-        System.out.println("Average Scheduler Response Time: " + avgSchedulerTime + " ms");
-        System.out.println("Average Fire Incident Response Time: " + avgFireTime + " ms");
+            writer.write("------PERFORMANCE METRICS ------\n");
+
+            writer.write("Total Extinguishing Time: " + totalExtinguishedTime + " ms\n");
+
+            // write each extinguished time
+            writer.write("Extinguished Times for each Fire Incident:\n");
+            for (Map.Entry<String, Double> entry : extinguishedTimes.entrySet()) {
+                String entity = entry.getKey();
+                double extinguishedTime = entry.getValue();
+                writer.write(entity + ": " + extinguishedTime + " ms\n");
+            }
+
+            // write each drone's response time
+            writer.write("Drone Response Times:\n");
+            for (Map.Entry<String, Double> entry : avgDroneTimes.entrySet()) {
+                String droneId = entry.getKey();
+                double avgTime = entry.getValue();
+                writer.write("Drone " + droneId + ": " + avgTime + " ms\n");
+            }
+
+            writer.write("\nOverall Average Drone Response Time: " + overallDroneResponseTime + " ms\n");
+            writer.write("Average Scheduler Response Time: " + avgSchedulerTime + " ms\n");
+            writer.write("Average Fire Incident Response Time: " + avgFireTime + " ms\n");
+
+            writer.flush();
+        } catch (IOException e){
+            System.err.println("Error writing logs: " + e.getMessage());
+        }
 
     }
 

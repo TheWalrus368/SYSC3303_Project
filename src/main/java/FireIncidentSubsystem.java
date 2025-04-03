@@ -113,8 +113,8 @@ public class FireIncidentSubsystem implements Runnable {
 
             // record specific fire
             MetricsLogger.logEvent("FIRE " + fireID, "FIRE_EXTINGUISHED", extinguishedTime,"Time taken to extinguish fire (ms)");
-            // record FireIncidentSubsystem's response time
 
+            // record FireIncidentSubsystem's response time
             MetricsLogger.logEvent("FIRE_INCIDENT_SUBSYSTEM", "FIRE_RESPONSE", responseTime, "Response time of FireIncidentSubsystem (ms)");
             System.out.println("[Drone -> Scheduler -> FireIncidentSubsystem] Got Drone Reply [FIRE " + fireID + "]: " + reply);
 
@@ -144,7 +144,7 @@ public class FireIncidentSubsystem implements Runnable {
         }
 
         LogAnalyzer analyzer = new LogAnalyzer();
-        analyzer.printMetrics();
+        analyzer.analyzeMetrics();
 
     }
 
