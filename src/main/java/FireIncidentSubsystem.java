@@ -1,12 +1,13 @@
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.SocketException;
+import java.net.*;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 
 /**
  * FireIncidentSubsystem is responsible for reading fire incident data from a CSV file
@@ -19,6 +20,9 @@ public class FireIncidentSubsystem implements Runnable {
     private static final int PORT = 8000;
     private final List<Thread> rpcThreads = new ArrayList<>();
 
+    private FireEvent prevFireEvent;
+    private static final DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
+
     /**
      * Constructor to initialize the FireIncidentSubsystem with a CSV file path and a Scheduler.
      *
@@ -26,6 +30,7 @@ public class FireIncidentSubsystem implements Runnable {
      */
     public FireIncidentSubsystem(String csvFilePath) {
         this.csvFilePath = csvFilePath;
+        prevFireEvent = null;
     }
 
     /**
@@ -39,24 +44,73 @@ public class FireIncidentSubsystem implements Runnable {
             while ((line = reader.readLine()) != null) {
                 FireEvent fireEvent = extractFireEventFromLine(line);
 
-                String newFireReport = "NEW FIRE: " + fireEvent;
-                byte[] dataBuffer = newFireReport.getBytes();
-                DatagramPacket dataPacket = new DatagramPacket(dataBuffer, dataBuffer.length, InetAddress.getLocalHost(), SCHEDULER_PORT);
+                Duration timeDifference = Duration.ZERO;
+                if (prevFireEvent != null) {
+                    timeDifference = calculateTimeDifference(prevFireEvent, fireEvent);
+                }
+                // Simulate Time Passing ---
+                if (!timeDifference.isZero() && !timeDifference.isNegative()) {
+                    long sleepMillis = timeDifference.toMillis();
+                    try {
+                        Thread.sleep(sleepMillis/60);
+                        // TODO remove division of 60 to simulate actual time
 
-                byte[] replyBuffer = new byte[200];
-                DatagramPacket replyPacket = new DatagramPacket(replyBuffer, replyBuffer.length);
+                    } catch (InterruptedException ignored) { }
+                } else if (timeDifference.isNegative()) {
+                    System.out.println("--- Warning: Current event time is before previous event time. Processing immediately.");
+                }
 
-                // Create and start a new thread for each RPC send
-                //new Thread(() -> rpc_send(dataPacket, replyPacket, fireEvent)).start();
-
-                Thread rpcThread = new Thread(() -> rpc_send(dataPacket, replyPacket, fireEvent));
+                Thread rpcThread = getThread(fireEvent);
                 rpcThreads.add(rpcThread);
                 rpcThread.start();
-
-
+                prevFireEvent = fireEvent;
             }
-        } catch (IOException e) {
-            System.out.println(e);
+        } catch (IOException ignored) { }
+    }
+
+    private Thread getThread(FireEvent fireEvent) throws UnknownHostException {
+        String newFireReport = "NEW FIRE: " + fireEvent;
+        byte[] dataBuffer = newFireReport.getBytes();
+        DatagramPacket dataPacket = new DatagramPacket(dataBuffer, dataBuffer.length, InetAddress.getLocalHost(), SCHEDULER_PORT);
+
+        byte[] replyBuffer = new byte[200];
+        DatagramPacket replyPacket = new DatagramPacket(replyBuffer, replyBuffer.length);
+
+        // Create and start a new thread for each RPC send
+        //new Thread(() -> rpc_send(dataPacket, replyPacket, fireEvent)).start();
+
+        return new Thread(() -> rpc_send(dataPacket, replyPacket, fireEvent));
+    }
+
+    /**
+     * Calculates the time difference between two fire events.
+     *
+     * @param previousEvent The preceding FireEvent.
+     * @param currentEvent  The current FireEvent.
+     * @return The Duration between the events, or Duration.ZERO if calculation fails.
+     */
+    private Duration calculateTimeDifference(FireEvent previousEvent, FireEvent currentEvent) {
+        try {
+            String prevTimeString = previousEvent.getTime();
+            String currentTimeString = currentEvent.getTime();
+
+            if (prevTimeString == null || currentTimeString == null) {
+                System.err.println("Warning: Cannot calculate time difference, null time string detected.");
+                return Duration.ZERO; // Return zero duration on null time
+            }
+
+            LocalTime previousTime = LocalTime.parse(prevTimeString, timeFormatter);
+            LocalTime currentTime = LocalTime.parse(currentTimeString, timeFormatter);
+
+            return Duration.between(previousTime, currentTime); // Return the calculated duration
+
+        } catch (DateTimeParseException ignored) {
+            System.err.printf("Warning: Could not parse time strings for difference calculation between event %d ('%s') and %d ('%s').",
+                    previousEvent.getFireID(), previousEvent.getTime(),
+                    currentEvent.getFireID(), currentEvent.getTime());
+            return Duration.ZERO; // Return zero duration on parsing error
+        } catch (Exception ignored) {
+            return Duration.ZERO; // Return zero duration on other errors
         }
     }
 

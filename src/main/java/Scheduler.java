@@ -99,8 +99,15 @@ class Scheduler implements Runnable{
                     }
 
                     if (fireRequest.contains("HANDOFF")) {
-                        Print.yellow(this + " Previously faulted fire" + " HANDOFF to [DRONE " + selectedDrone.getDroneID() + "]");
-                        //TODO: fireRequest parse for id after fire: fireRequest.getID();
+                        String regex = "zoneId=(\\d+)";
+                        Pattern pattern = Pattern.compile(regex);
+                        Matcher matcher = pattern.matcher(fireRequest);
+                        if (matcher.find()) {
+                            try {
+                                int zoneID = Integer.parseInt(matcher.group(1));
+                                Print.yellow(this + " Previously faulted fire from zone " + zoneID + " HANDOFF to [DRONE " + selectedDrone.getDroneID() + "]");
+                            } catch (NumberFormatException ignored) { }
+                        }
                     }
 
                     // Create a packet sending the drone the fire to extinguish
