@@ -177,7 +177,7 @@ class Scheduler implements Runnable{
 
                     break;
                 case "FAULT":
-                    System.out.println("[Scheduler <- Drone] " + requestData);
+                    Print.red("[Scheduler <- Drone] " + requestData);
                     String unfaultedFireEvent = extractFireEvent(requestData).replace("FAULT", "HANDOFF");
                     Print.yellow("[Scheduler] Adding fire back to list " + unfaultedFireEvent);
 
