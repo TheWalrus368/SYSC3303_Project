@@ -169,10 +169,10 @@ Running Unit Tests
 
 Conclusion
 -----------
-This project simulates a fire incident response system with multi-threading, state machines, and synchronized task delegation. The provided UML diagrams help visualize system interactions and behaviors, ensuring clarity in implementation.
+This project simulates a fire incident response system with multi-threading, state machines, and synchronized task delegation. It also keeps records of the performance metrics during simulation, and is viewable afterwards. The provided UML diagrams help visualize system interactions and behaviors, ensuring clarity in implementation.
 
 Authors
 -------
 README written by Daniel and JavaDocs written by Claire, Tony, Brian and Darren
 Developed by Darren and Brian (main code) and Claire (MetricsLogger and LogAnalyzer) and Tony (colored terminal test cases)
-UML Class Diagram by Tony and Timing Diagram by Daniel
+UML Class Diagram and Timing Diagram by Daniel
