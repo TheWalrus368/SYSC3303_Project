@@ -19,36 +19,81 @@ Components
 
 - Sends acknowledgement to scheduler. 
 
+- Simulates real-time fire event generation with time delays between events.
+
+- Logs response times and extinguishing times for performance analysis.
+
 2. DroneSubsystem
 
 - Fetches fire events from the Scheduler.
 
 - Processes the event and simulates firefighting.
 
+- Simulates travel, agent dropping, refilling, and fault handling.
+
+- Tracks drone state (Idle, En Route, Dropping Agent, Refilling, Complete, Faulted).
+
+- Logs travel distances and response times.
+
+- Supports dynamic reassignment of faulted fires.
+
 
 3. Scheduler
 
 - Acts as an intermediary between FireIncidentSubsystem and DroneSubsystem.
 
-- Manages task queues for fire event delegation.
+- Manages task queues for fire event delegation (sorted by fire severity: High > Moderate > Low).
 
 - Handles synchronization between event generation and drone responses.
 
-4. DroneStateMachine
+- Handles drone registration, state updates, and fault recovery.
 
+- Uses UDP for communication.
+
+- Dynamically assigns tasks to available drones.
+
+- Logs scheduler response times.Uses UDP for communication.
+
+- Dynamically assigns tasks to available drones.
+
+- Logs scheduler response times.
+
+4. DroneStateMachine
+	
 - Implements the drone behavior using a state machine.
 
 - The drone can be in various states such as Idle, Responding, Extinguishing, Returning.
 
 - Transitions between states occur based on fire event assignments and completion status.
 
-5. SchedulerStateMachine
+States:
 
-- Implements the behavior for the scheduler.
+	Idle: Requests new tasks or refills agent if empty.
 
-- Scheduler has various states such as DISPATCH_DRONE, NOTIFY_FIRE_EXTINGUISHED, NEW_FIRE, etc
+	En Route: Simulates travel to the fire zone.
 
-- Transitions between states are based on requests from the DroneSubsystems and FireIncidentSubsystems
+	Dropping Agent: Extinguishes fires; handles faults.
+
+	Refilling: Returns to base and refills agent.
+
+	Complete: Notifies the Scheduler of success.
+	
+	Faulted: Reports failures to the Scheduler.
+
+5. Logging & Metrics
+MetricsLogger:
+
+Logs events (e.g., fire extinguished, drone travel) to event-log.txt.
+
+LogAnalyzer:
+
+Generates performance reports in metrics-log.txt, including:
+
+	I) Average response times (Scheduler, Drones, FireSubsystem).
+
+	II) Total extinguishing time.
+
+	III) Distance traveled by drones.
 
 UML Diagrams
 ------------
@@ -128,6 +173,6 @@ This project simulates a fire incident response system with multi-threading, sta
 
 Authors
 -------
-README written by Claire and JavaDocs written by Brian and Darren
-Developed by Darren and Brian (main code) and Claire and Tony (test cases)
+README written by Daniel and JavaDocs written by Claire, Tony, Brian and Darren
+Developed by Darren and Brian (main code) and Claire (MetricsLogger and LogAnalyzer) and Tony (colored terminal test cases)
 UML Class Diagram by Tony and Timing Diagram by Daniel
