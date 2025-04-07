@@ -32,5 +32,11 @@ public class ModifiedDroneSubsystem extends DroneSubsystem{
         return currentFireEvent != null && currentFireEvent.getRemainingWaterNeeded() <= 0;
     }
 
+    @Override
+    public FireEvent getCurrentFireEvent() {
+        // Override the getter to return the 'currentFireEvent' field
+        // declared within this ModifiedDroneSubsystem class.
+        return this.currentFireEvent;
+    }
 
 }

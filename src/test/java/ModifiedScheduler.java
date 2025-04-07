@@ -3,7 +3,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ModifiedScheduler extends Scheduler {
-    public List<DroneStatus> drones;
+    public final List<DroneStatus> drones;
     public final List<FireEvent> eventsSent = new ArrayList<>();
     public final List<FireEvent> responsesReceived = new ArrayList<>();
     public BoundedBuffer fireToDroneBuffer;
@@ -20,7 +20,6 @@ public class ModifiedScheduler extends Scheduler {
 
     /**
      * Overriding so that the test cases use ModifiedScheduler's drone list
-     * @return
      */
     @Override
     public synchronized DroneStatus getAvailableDrone() {
@@ -37,7 +36,6 @@ public class ModifiedScheduler extends Scheduler {
      * Overriding so that the test drones' status are being added to the ModifiedScheduler,
      * not Scheduler class
      * @param data The incoming data string to be parsed.
-     * @return
      */
     @Override
     public EventStatus handleEvent(String data) {
@@ -106,11 +104,11 @@ public class ModifiedScheduler extends Scheduler {
         }
 
         // Sorting algorithm for the fire events
-        Collections.sort(fireEvents, new Comparator<String>() {
+        fireEvents.sort(new Comparator<String>() {
             public int compare(String e1, String e2) {
-                Pattern pattern     = Pattern.compile("severity='(High|Moderate|Low)'");
-                Matcher matcher1    = pattern.matcher(e1);
-                Matcher matcher2    = pattern.matcher(e2);
+                Pattern pattern = Pattern.compile("severity='(High|Moderate|Low)'");
+                Matcher matcher1 = pattern.matcher(e1);
+                Matcher matcher2 = pattern.matcher(e2);
                 int rank1 = severityOrder.size();
                 int rank2 = severityOrder.size();
                 if (matcher1.find()) {
@@ -135,6 +133,18 @@ public class ModifiedScheduler extends Scheduler {
         //} catch (InterruptedException e) {
         //    throw new RuntimeException(e);
         //}
+    }
+
+    @Override
+    public void updateDroneState(int droneID, String newState) {
+        synchronized (this.drones) {
+            for (DroneStatus drone : this.drones) {
+                if (drone.getDroneID() == droneID) {
+                    drone.setState(newState);
+                    return;
+                }
+            }
+        }
     }
 
     public List<FireEvent> getEventsSent() {
