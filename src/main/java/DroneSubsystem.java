@@ -323,18 +323,37 @@ public class DroneSubsystem implements Runnable {
         DroneSubsystem droneSubsystem2 = new DroneSubsystem(200);
         DroneSubsystem droneSubsystem3 = new DroneSubsystem(300);
         DroneSubsystem droneSubsystem4 = new DroneSubsystem(400);
+        DroneSubsystem droneSubsystem5 = new DroneSubsystem(500);
+        DroneSubsystem droneSubsystem6 = new DroneSubsystem(600);
+        DroneSubsystem droneSubsystem7 = new DroneSubsystem(700);
+        DroneSubsystem droneSubsystem8 = new DroneSubsystem(800);
+        DroneSubsystem droneSubsystem9 = new DroneSubsystem(900);
+        DroneSubsystem droneSubsystem999 = new DroneSubsystem(999);
 
         // Start threads
         Thread droneThread1 = new Thread(droneSubsystem1, "DRONE 1");
         Thread droneThread2 = new Thread(droneSubsystem2, "DRONE 2");
         Thread droneThread3 = new Thread(droneSubsystem3, "DRONE 3");
         Thread droneThread4 = new Thread(droneSubsystem4, "DRONE 4");
+        Thread droneThread5 = new Thread(droneSubsystem5, "DRONE 5");
+        Thread droneThread6 = new Thread(droneSubsystem6, "DRONE 6");
+        Thread droneThread7 = new Thread(droneSubsystem7, "DRONE 7");
+        Thread droneThread8 = new Thread(droneSubsystem8, "DRONE 8");
+        Thread droneThread9 = new Thread(droneSubsystem9, "DRONE 9");
+        Thread droneThread999 = new Thread(droneSubsystem999, "DRONE 999");
 
         // Begin execution of subsystems
         droneThread1.start();
         droneThread2.start();
         droneThread3.start();
         droneThread4.start();
+        droneThread5.start();
+        droneThread6.start();
+        droneThread7.start();
+        droneThread8.start();
+        droneThread9.start();
+        droneThread999.start();
+
     }
 
 }
