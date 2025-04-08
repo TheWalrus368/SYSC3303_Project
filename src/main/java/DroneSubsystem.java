@@ -13,7 +13,7 @@ public class DroneSubsystem implements Runnable {
     private FireEvent currentFireEvent;
     public FireEvent lastFireEvent;
     private static final int MAX_AGENT_CAP = 15; // Max payload is 15kg
-    private static final int SPEED = 200;
+    private static final int SPEED = 10;
     private DatagramSocket sendSocket, receiveSocket;
     private static final int BASE_PORT = 6000;
     private static final int SCHEDULER_PORT = 7000;

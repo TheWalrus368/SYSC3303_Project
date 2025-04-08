@@ -136,7 +136,7 @@ public class FireIncidentSubsystem implements Runnable {
         if (!timeDifference.isZero() && !timeDifference.isNegative()) {
             long sleepMillis = timeDifference.toMillis();
             try {
-                Thread.sleep(sleepMillis/60);
+                Thread.sleep(sleepMillis);
                 // TODO remove division of 60 to simulate actual time
 
             } catch (InterruptedException ignored) { }

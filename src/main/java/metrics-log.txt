@@ -1,54 +1,61 @@
 -------PERFORMANCE METRICS -------
 Time to Extinguish Each Fire Incident:
-FIRE 10: 28397.0 ms
-FIRE 12: 33321.0 ms
-FIRE 11: 10796.0 ms
-FIRE 14: 23528.0 ms
-FIRE 15: 9466.0 ms
-FIRE 8: 14306.0 ms
-FIRE 9: 22469.0 ms
-FIRE 6: 10995.0 ms
-FIRE 7: 12976.0 ms
-FIRE 4: 10674.0 ms
-FIRE 5: 5498.0 ms
-FIRE 2: 21997.0 ms
-FIRE 3: 5498.0 ms
-FIRE 1: 6991.0 ms
-Total Extinguishing Time: 216912.0 ms
+FIRE 10: 863329.0 ms
+FIRE 11: 119362.0 ms
+FIRE 14: 280219.0 ms
+FIRE 13: 706115.0 ms
+FIRE 15: 398828.0 ms
+FIRE 8: 323812.0 ms
+FIRE 9: 373807.0 ms
+FIRE 6: 329748.0 ms
+FIRE 7: 138298.0 ms
+FIRE 4: 184405.0 ms
+FIRE 5: 109918.0 ms
+FIRE 2: 341760.0 ms
+FIRE 3: 109919.0 ms
+FIRE 1: 138391.0 ms
+Total Extinguishing Time: 4417911.0 ms
 
 Drone Response Times:
-DRONE 700: 61556.0 ms
-DRONE 500: 14272.83 ms
-DRONE 400: 28024.67 ms
-DRONE 300: 10688.0 ms
-DRONE 200: 99251.0 ms
-DRONE 100: 3173.11 ms
-DRONE 999: 15544.0 ms
-DRONE 900: 8353.67 ms
+DRONE 700: 34738.0 ms
+DRONE 600: 18942.5 ms
+DRONE 500: 59754.0 ms
+DRONE 400: 7791.83 ms
+DRONE 300: 36931.0 ms
+DRONE 200: 54201.33 ms
+DRONE 100: 26470.5 ms
+DRONE 999: 925.67 ms
+DRONE 900: 46817.0 ms
+DRONE 800: 30214.75 ms
 
-Overall Average Drone Response Time: 30107.91 ms
-Average Scheduler Response Time: 13143.58 ms
-Average Fire Incident Response Time: 15498.0 ms
+Overall Average Drone Response Time: 31678.66 ms
+Average Scheduler Response Time: 79024.12 ms
+Average Fire Incident Response Time: 315572.21 ms
 
 Distance Required for Each Drone to Travel to Target:
 (where each index of distance array represents nth time the drone visits zone x)
-[DRONE 500 -> ZONE 0]: [1432.87, 1892.75] m
-[DRONE 900 -> ZONE 2]: [1099.15] m
-[DRONE 400 -> ZONE 0]: [1892.75, 1892.75, 1079.35] m
-[DRONE 900 -> ZONE 1]: [750.42] m
+[DRONE 900 -> ZONE 3]: [1079.35, 1079.35] m
 [DRONE 300 -> ZONE 1]: [460.98, 460.98] m
-[DRONE 700 -> ZONE 5]: [1892.75] m
-[DRONE 300 -> ZONE 0]: [460.98, 1079.35, 1079.35, 1432.87, 1432.87] m
-[DRONE 999 -> ZONE 2]: [1099.15] m
-[DRONE 100 -> ZONE 2]: [1099.15, 1099.15, 1099.15] m
-[DRONE 100 -> ZONE 1]: [460.98, 460.98, 750.42, 460.98, 460.98] m
-[DRONE 100 -> ZONE 4]: [976.28] m
-[DRONE 100 -> ZONE 0]: [460.98, 460.98, 1099.15, 1099.15, 460.98, 460.98] m
-[DRONE 200 -> ZONE 5]: [1892.75] m
-[DRONE 300 -> ZONE 3]: [701.78, 1079.35, 1079.35] m
-[DRONE 500 -> ZONE 5]: [985.2, 1892.75] m
-[DRONE 300 -> ZONE 4]: [803.51, 1432.87, 1432.87] m
-[DRONE 500 -> ZONE 4]: [650.0, 1432.87] m
-[DRONE 400 -> ZONE 3]: [1079.35, 1079.35] m
-[DRONE 500 -> ZONE 2]: [1099.15] m
-[DRONE 400 -> ZONE 5]: [1892.75, 1892.75] m
+[DRONE 600 -> ZONE 5]: [803.51, 1892.75, 1892.75] m
+[DRONE 200 -> ZONE 3]: [1079.35, 1079.35] m
+[DRONE 999 -> ZONE 1]: [460.98, 460.98] m
+[DRONE 100 -> ZONE 1]: [460.98, 460.98] m
+[DRONE 400 -> ZONE 2]: [1099.15, 1099.15] m
+[DRONE 700 -> ZONE 2]: [1099.15] m
+[DRONE 600 -> ZONE 0]: [1892.75, 1892.75] m
+[DRONE 800 -> ZONE 2]: [1099.15, 1099.15] m
+[DRONE 600 -> ZONE 2]: [1099.15] m
+[DRONE 400 -> ZONE 0]: [1099.15, 1099.15] m
+[DRONE 800 -> ZONE 4]: [650.0] m
+[DRONE 900 -> ZONE 0]: [1079.35, 1079.35] m
+[DRONE 300 -> ZONE 0]: [460.98, 460.98] m
+[DRONE 800 -> ZONE 0]: [1099.15, 1432.87] m
+[DRONE 999 -> ZONE 4]: [1432.87] m
+[DRONE 100 -> ZONE 4]: [976.28, 1432.87, 1432.87] m
+[DRONE 200 -> ZONE 0]: [1079.35, 1892.75] m
+[DRONE 999 -> ZONE 0]: [460.98, 460.98] m
+[DRONE 100 -> ZONE 0]: [460.98, 1432.87, 1432.87] m
+[DRONE 200 -> ZONE 5]: [1726.99, 1892.75] m
+[DRONE 300 -> ZONE 5]: [1892.75] m
+[DRONE 500 -> ZONE 1]: [460.98] m
+[DRONE 400 -> ZONE 5]: [1892.75] m
